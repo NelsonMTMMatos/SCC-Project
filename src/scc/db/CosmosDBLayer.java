@@ -14,9 +14,9 @@ import com.azure.cosmos.util.CosmosPagedIterable;
 import scc.data.UserDAO;
 
 public class CosmosDBLayer {
-	private static final String CONNECTION_URL = "https://scc23244204.documents.azure.com:443/";
-	private static final String DB_KEY = "wuVEJ3C1xiWYt0iLDTBEJGZVnOmEQ9r5YXB89MwbpePC2vOxNFctI1hm5BGh6evq7k4FUpCYq6TmACDbt6X1mg==";
-	private static final String DB_NAME = "scc2324db";
+	private static final String CONNECTION_URL = "https://scc232460665.documents.azure.com:443/";
+	private static final String DB_KEY = "3OQYJPlyi5kfhenKoKWuL1iCmeVcIcYnZhIH2TtQhXBIRIqluDTOeX24lMr6TyvIhunvOjOBgk8sACDbissptQ==";
+	private static final String DB_NAME = "scc2324";
 	
 	private static CosmosDBLayer instance;
 

@@ -25,7 +25,7 @@ import jakarta.ws.rs.core.MediaType;
 @Path("/media")
 public class MediaResource
 {
-	String storageConnectionString = "DefaultEndpointsProtocol=https;AccountName=scc60483;AccountKey=t03lDK7vEg/Pa1He1cgCh9ULjHZIwaJwMEZ8URGMBkFIbhB8ueGEPK3XsNqQj45t4Y7OP1wZ8RjG+ASty4Onpg==;EndpointSuffix=core.windows.net";
+	String storageConnectionString = "DefaultEndpointsProtocol=https;AccountName=scc60665;AccountKey=cQS4mL1TMCZUU8xisN93eNkAsNl3vcpOv5Xb1vNEm8WVJ5WmkcDEaRPziCxwVgAK2CBtsrr12T64+ASteB15yg==;EndpointSuffix=core.windows.net";
 
 	BlobContainerClient containerClient;
 
@@ -49,7 +49,7 @@ public class MediaResource
 
 			blob.upload(BinaryData.fromBytes(contents));
 
-			System.out.println( "File updloaded : " + filename);
+			System.out.println( "File uploaded : " + filename);
 		}catch( Exception e) {
 			e.printStackTrace();
 		}

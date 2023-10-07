@@ -2,12 +2,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>pt.unl.fct.di.scc</groupId>
-	<artifactId>scc2324-lab1</artifactId>
+	<artifactId>scc2324-phase1</artifactId>
 	<version>1.0</version>
 	<packaging>war</packaging>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<authors>XXXXX-YYYYY-ZZZZZ</authors>
+		<authors>60483-60665-60691</authors>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -143,7 +143,7 @@
 			            </resources>
 			        </deployment>
 			        <resourceGroup>scc-backend-rg-60483-60665-60691</resourceGroup>
-			        <appName>scc-backend-60483-60665-60691</appName>
+			        <appName>scc-backend-60665</appName>
 			    </configuration>
 			</plugin>
 		</plugins>

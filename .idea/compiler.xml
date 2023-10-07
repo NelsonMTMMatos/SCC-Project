@@ -6,7 +6,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="scc2324-lab1" />
+        <module name="scc2324-phase1" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
