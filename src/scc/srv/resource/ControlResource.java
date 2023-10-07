@@ -1,4 +1,4 @@
-package scc.srv;
+package scc.srv.resource;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;

@@ -1,4 +1,4 @@
-package scc.srv;
+package scc.srv.resource;
 
 import com.azure.core.util.BinaryData;
 import com.azure.storage.blob.BlobClient;
@@ -29,7 +29,7 @@ public class MediaResource
 
 	BlobContainerClient containerClient;
 
-	MediaResource(){
+	public MediaResource(){
 		containerClient = new BlobContainerClientBuilder()
 				.connectionString(storageConnectionString)
 				.containerName("images")

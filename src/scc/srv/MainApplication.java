@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.ws.rs.core.Application;
+import scc.srv.resource.ControlResource;
+import scc.srv.resource.MediaResource;
 
 public class MainApplication extends Application
 {
@@ -12,7 +14,7 @@ public class MainApplication extends Application
 
 	public MainApplication() {
 		resources.add(ControlResource.class);
-		singletons.add( new MediaResource());	
+		singletons.add( new MediaResource());
 	}
 
 	@Override
