@@ -11,6 +11,7 @@ import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.util.CosmosPagedIterable;
 
+import scc.data.HouseDAO;
 import scc.data.UserDAO;
 
 public class CosmosDBLayer {
@@ -41,7 +42,7 @@ public class CosmosDBLayer {
 	
 	private CosmosClient client;
 	private CosmosDatabase db;
-	private CosmosContainer users;
+	private CosmosContainer users, houses;
 	
 	public CosmosDBLayer(CosmosClient client) {
 		this.client = client;
@@ -52,6 +53,7 @@ public class CosmosDBLayer {
 			return;
 		db = client.getDatabase(DB_NAME);
 		users = db.getContainer("users");
+		houses = db.getContainer("houses");
 		
 	}
 
@@ -59,11 +61,6 @@ public class CosmosDBLayer {
 		init();
 		PartitionKey key = new PartitionKey( id);
 		return users.deleteItem(id, key, new CosmosItemRequestOptions());
-	}
-	
-	public CosmosItemResponse<Object> delUser(UserDAO user) {
-		init();
-		return users.deleteItem(user, new CosmosItemRequestOptions());
 	}
 	
 	public CosmosItemResponse<UserDAO> putUser(UserDAO user) {
@@ -79,6 +76,27 @@ public class CosmosDBLayer {
 	public CosmosPagedIterable<UserDAO> getUsers() {
 		init();
 		return users.queryItems("SELECT * FROM users ", new CosmosQueryRequestOptions(), UserDAO.class);
+	}
+
+	public CosmosItemResponse<Object> delHouseById (String id){
+		init();
+		PartitionKey key = new PartitionKey(id);
+		return houses.deleteItem(id, key, new CosmosItemRequestOptions());
+	}
+
+	public CosmosItemResponse<HouseDAO> createHouse(HouseDAO house){
+		init();
+		return houses.createItem(house);
+	}
+
+	public CosmosPagedIterable<HouseDAO> getHouseById(String id){
+		init();
+		return  houses.queryItems("SELECT * FROM houses WHERE houses.id=\"" + id + "\"", new CosmosQueryRequestOptions(), HouseDAO.class);
+	}
+
+	public CosmosPagedIterable<HouseDAO> getHouses(){
+		init();
+		return houses.queryItems("SELECT * FROM houses", new CosmosQueryRequestOptions(), HouseDAO.class);
 	}
 
 	public void close() {
