@@ -29,7 +29,7 @@ public class TestUsers
 			u.setPhotoId("0:34253455");
 			u.setHouseIds(new String[0]);
 
-			res = db.putUser(u);
+			res = db.createUser(u);
 			System.out.println( "Put result");
 			System.out.println( res.getStatusCode());
 			System.out.println( res.getItem());
@@ -56,7 +56,7 @@ public class TestUsers
 			u.setPhotoId("0:34253455");
 			u.setHouseIds(new String[0]);
 
-			res = db.putUser(u);
+			res = db.createUser(u);
 			System.out.println( "Put result");
 			System.out.println( res.getStatusCode());
 			System.out.println( res.getItem());

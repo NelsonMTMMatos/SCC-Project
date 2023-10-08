@@ -22,6 +22,10 @@ public class User {
 		this.photoId = photoId;
 		this.houseIds = houseIds;
 	}
+
+	public User(UserDAO user) {
+		this(user.getId(), user.getName(), user.getPwd(), user.getPhotoId(), user.getHouseIds());
+	}
 	public String getId() {
 		return id;
 	}
