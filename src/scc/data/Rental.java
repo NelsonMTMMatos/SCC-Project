@@ -4,15 +4,15 @@ import java.time.LocalDate;
 import java.time.Period;
 
 public class Rental {
-    private String rentalId;
+    private String id;
     private String houseId;
     private String userId;
     private LocalDate startDate;
     private LocalDate endDate;
     private int price;
 
-    public Rental(String rentalId, String houseId, String userId, LocalDate startDate, LocalDate endDate, int price) {
-        this.rentalId = rentalId;
+    public Rental(String id, String houseId, String userId, LocalDate startDate, LocalDate endDate, int price) {
+        this.id = id;
         this.houseId = houseId;
         this.userId = userId;
         this.startDate = startDate;
@@ -20,8 +20,12 @@ public class Rental {
         this.price = price;
     }
 
-    public String getRentalId() {
-        return rentalId;
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getHouseId() {
