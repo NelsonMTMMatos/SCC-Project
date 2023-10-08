@@ -17,6 +17,10 @@ public class RentalDAO {
 
     public RentalDAO() {}
 
+    public RentalDAO(Rental r) {
+        this(r.getId(), r.getHouseId(), r.getUserId(), r.getStartDate(), r.getEndDate(), r.getPrice());
+    }
+
     public RentalDAO(String id, String houseId, String userId, LocalDate startDate, LocalDate endDate, int price) {
         super();
         this.id = id;
