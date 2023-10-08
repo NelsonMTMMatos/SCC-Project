@@ -12,6 +12,7 @@ import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.util.CosmosPagedIterable;
 
 import scc.data.HouseDAO;
+import scc.data.RentalDAO;
 import scc.data.UserDAO;
 
 public class CosmosDBLayer {
@@ -42,7 +43,7 @@ public class CosmosDBLayer {
 	
 	private CosmosClient client;
 	private CosmosDatabase db;
-	private CosmosContainer users, houses;
+	private CosmosContainer users, houses, rentals;
 	
 	public CosmosDBLayer(CosmosClient client) {
 		this.client = client;
@@ -54,6 +55,7 @@ public class CosmosDBLayer {
 		db = client.getDatabase(DB_NAME);
 		users = db.getContainer("users");
 		houses = db.getContainer("houses");
+		rentals = db.getContainer("rentals");
 		
 	}
 
@@ -109,6 +111,22 @@ public class CosmosDBLayer {
 	public CosmosPagedIterable<HouseDAO> getHouses(){
 		init();
 		return houses.queryItems("SELECT * FROM houses", new CosmosQueryRequestOptions(), HouseDAO.class);
+	}
+
+	public CosmosItemResponse<RentalDAO> createRental(RentalDAO rental){
+		init();
+		return rentals.createItem(rental);
+	}
+
+	public CosmosItemResponse<RentalDAO> updateRental(RentalDAO rental){
+		init();
+		PartitionKey key = new PartitionKey(rental.getId());
+		return rentals.replaceItem(rental, rental.getId(), key, new CosmosItemRequestOptions());
+	}
+
+	public CosmosPagedIterable<RentalDAO> getRentalById(String id){
+		init();
+		return rentals.queryItems("SELECT * FROM rentals WHERE rentals.id=\"" + id + "\"", new CosmosQueryRequestOptions(), RentalDAO.class);
 	}
 
 	public void close() {
