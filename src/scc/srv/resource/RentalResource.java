@@ -54,7 +54,7 @@ public class RentalResource {
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
-    public String getInfoRental(@PathParam("id") String id) {
+    public String getRentalInfo(@PathParam("id") String id) {
         try {
             CosmosDBLayer db = CosmosDBLayer.getInstance();
         } catch (Exception e) {
