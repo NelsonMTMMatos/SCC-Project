@@ -57,15 +57,21 @@ public class CosmosDBLayer {
 		
 	}
 
+	public CosmosItemResponse<UserDAO> createUser(UserDAO user) {
+		init();
+		return users.createItem(user);
+	}
+
 	public CosmosItemResponse<Object> delUserById(String id) {
 		init();
 		PartitionKey key = new PartitionKey( id);
 		return users.deleteItem(id, key, new CosmosItemRequestOptions());
 	}
-	
-	public CosmosItemResponse<UserDAO> putUser(UserDAO user) {
+
+	public CosmosItemResponse<UserDAO> updateUser(UserDAO user){
 		init();
-		return users.createItem(user);
+		PartitionKey key = new PartitionKey(user.getId());
+		return users.replaceItem(user, user.getId(), key, new CosmosItemRequestOptions());
 	}
 	
 	public CosmosPagedIterable<UserDAO> getUserById( String id) {
@@ -78,15 +84,21 @@ public class CosmosDBLayer {
 		return users.queryItems("SELECT * FROM users ", new CosmosQueryRequestOptions(), UserDAO.class);
 	}
 
+	public CosmosItemResponse<HouseDAO> createHouse(HouseDAO house){
+		init();
+		return houses.createItem(house);
+	}
+
 	public CosmosItemResponse<Object> delHouseById (String id){
 		init();
 		PartitionKey key = new PartitionKey(id);
 		return houses.deleteItem(id, key, new CosmosItemRequestOptions());
 	}
 
-	public CosmosItemResponse<HouseDAO> createHouse(HouseDAO house){
+	public CosmosItemResponse<HouseDAO> updateHouse(HouseDAO house) {
 		init();
-		return houses.createItem(house);
+		PartitionKey key = new PartitionKey(house.getId());
+		return houses.replaceItem(house, house.getId(), key, new CosmosItemRequestOptions());
 	}
 
 	public CosmosPagedIterable<HouseDAO> getHouseById(String id){
