@@ -2,6 +2,7 @@ package scc.srv.resource;
 
 import scc.data.House;
 import scc.data.HouseDAO;
+import scc.data.Question;
 import scc.data.Rental;
 import scc.db.CosmosDBLayer;
 
