@@ -96,9 +96,7 @@ public class UserResource {
 
             UserDAO newUser = new UserDAO(user);
 
-            jedis.del(String.format(CACHE_USER_ENTRY_FORMAT, id));
             jedis.set(String.format(CACHE_USER_ENTRY_FORMAT, id), new ObjectMapper().writeValueAsString(newUser));
-
             db.updateUser(newUser);
 
             return user;
@@ -131,9 +129,9 @@ public class UserResource {
             if(!uDao.getPwd().equals(pwd))
                 throw new Exception("Password does not match.");
 
-            User u = uDao.toUser();
-            jedis.set(String.format(CACHE_USER_ENTRY_FORMAT, id), mapper.writeValueAsString(u));
-            return u;
+            jedis.set(String.format(CACHE_USER_ENTRY_FORMAT, id), mapper.writeValueAsString(uDao));
+
+            return uDao.toUser();
         }catch (Exception e){
             e.printStackTrace();
         }
