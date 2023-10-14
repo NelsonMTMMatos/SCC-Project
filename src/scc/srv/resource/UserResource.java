@@ -57,6 +57,7 @@ public class UserResource {
     @Produces(MediaType.APPLICATION_JSON)
     public User deleteUser(@PathParam(ID) String id, @QueryParam(PWD) String pwd){
             try(Jedis jedis = RedisCache.getCachePool().getResource()){
+                CosmosDBLayer db = CosmosDBLayer.getInstance();
                 ObjectMapper mapper = new ObjectMapper();
 
                 String res = jedis.get("user:" + id);
@@ -65,10 +66,10 @@ public class UserResource {
 
                 if(u != null) if(u.getPwd().equals(pwd)){
                     jedis.del("user:" + id);
+                    db.delUserById(id);
                     return u;
                 }
 
-                CosmosDBLayer db = CosmosDBLayer.getInstance();
                 CosmosPagedIterable<UserDAO> resGet = db.getUserById(id);
                 UserDAO uDao = getUser(resGet);
 
@@ -78,9 +79,9 @@ public class UserResource {
                 if(!uDao.getPwd().equals(pwd))
                     throw new Exception("Password does not match.");
 
-                CosmosItemResponse<Object> resDb = db.delUserById(id);
+                db.delUserById(id);
 
-                return (User) resDb.getItem();
+                return uDao.toUser();
             }catch (Exception e){
                 e.printStackTrace();
             }
@@ -111,11 +112,10 @@ public class UserResource {
             if(!uDao.getPwd().equals(pwd))
                 throw new Exception("Password does not match.");
 
-            CosmosItemResponse<UserDAO> resDb = db.updateUser(uDao);
+            db.updateUser(new UserDAO(user));
             jedis.del("user:" + id);
-            u = resDb.getItem().toUser();
-            jedis.set("user:" + id, new ObjectMapper().writeValueAsString(u));
-            return u;
+            jedis.set("user:" + id, new ObjectMapper().writeValueAsString(user));
+            return user;
         }catch (Exception e){
             e.printStackTrace();
         }
