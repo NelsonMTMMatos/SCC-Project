@@ -19,18 +19,15 @@ public class UserResource {
 
     private final String ID = "id";
     private final String PWD = "pwd";
-    private final String CACHE_USER_ENTRY_FORMAT = "user:%s";
-    private final String CACHE_HOUSE_ENTRY_FORMAT = "house:%s";
-
+    private final String USER_CACHE_ENTRY_FORMAT = "user:%s";
     public UserResource(){}
-
     @Path("/")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String createUser(User user){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
-            String res = jedis.get(String.format(CACHE_USER_ENTRY_FORMAT, user.getId()));
+            String res = jedis.get(String.format(USER_CACHE_ENTRY_FORMAT, user.getId()));
 
             if(res != null) throw new Exception("User already exists.");
 
@@ -42,8 +39,8 @@ public class UserResource {
 
             UserDAO newUser = new UserDAO(user);
 
-            jedis.set(String.format(CACHE_USER_ENTRY_FORMAT, user.getId()), new ObjectMapper().writeValueAsString(newUser));
             db.createUser(newUser);
+            jedis.set(String.format(USER_CACHE_ENTRY_FORMAT, user.getId()), new ObjectMapper().writeValueAsString(newUser));
 
             return newUser.getId();
         }catch (Exception e){
@@ -68,8 +65,8 @@ public class UserResource {
                 if(!uDao.getPwd().equals(pwd))
                     throw new Exception("Password does not match.");
 
-                jedis.del(String.format(CACHE_USER_ENTRY_FORMAT, id));
                 db.delUserById(id);
+                jedis.del(String.format(USER_CACHE_ENTRY_FORMAT, id));
 
                 return uDao.toUser();
             }catch (Exception e){
@@ -96,8 +93,8 @@ public class UserResource {
 
             UserDAO newUser = new UserDAO(user);
 
-            jedis.set(String.format(CACHE_USER_ENTRY_FORMAT, id), new ObjectMapper().writeValueAsString(newUser));
             db.updateUser(newUser);
+            jedis.set(String.format(USER_CACHE_ENTRY_FORMAT, id), new ObjectMapper().writeValueAsString(newUser));
 
             return user;
         }catch (Exception e){
@@ -112,24 +109,24 @@ public class UserResource {
     public User getUserById(@PathParam(ID) String id, @QueryParam(PWD) String pwd){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
             ObjectMapper mapper = new ObjectMapper();
+            String res = jedis.get(String.format(USER_CACHE_ENTRY_FORMAT, id));
+            UserDAO uDao;
 
-            String res = jedis.get(String.format(CACHE_USER_ENTRY_FORMAT, id));
+            if(res != null)
+                uDao = mapper.readValue(res, UserDAO.class);
+            else{
+                CosmosDBLayer db = CosmosDBLayer.getInstance();
+                CosmosPagedIterable<UserDAO> resGet = db.getUserById(id);
+                uDao = getUser(resGet);
 
-            UserDAO uCache = mapper.readValue(res, UserDAO.class);
+                if(uDao == null)
+                    throw new Exception("User does not exists.");
+            }
 
-            if(uCache != null) if(uCache.getPwd().equals(pwd)) return uCache.toUser();
-
-            CosmosDBLayer db = CosmosDBLayer.getInstance();
-            CosmosPagedIterable<UserDAO> resGet = db.getUserById(id);
-            UserDAO uDao = getUser(resGet);
-
-            if(uDao == null)
-                throw new Exception("User does not exists.");
-
-            if(!uDao.getPwd().equals(pwd))
+            if (!uDao.getPwd().equals(pwd))
                 throw new Exception("Password does not match.");
 
-            jedis.set(String.format(CACHE_USER_ENTRY_FORMAT, id), mapper.writeValueAsString(uDao));
+            jedis.set(String.format(USER_CACHE_ENTRY_FORMAT, id), mapper.writeValueAsString(uDao));
 
             return uDao.toUser();
         }catch (Exception e){
@@ -154,13 +151,13 @@ public class UserResource {
             Set<House> houses = new HashSet<>();
             for(String hID: u.getHouseIds()) {
                 ObjectMapper mapper = new ObjectMapper();
-                String res = jedis.get(String.format(CACHE_HOUSE_ENTRY_FORMAT, hID));
+                String res = jedis.get(String.format(HouseResource.HOUSE_CACHE_ENTRY_FORMAT, hID));
 
                 House h = mapper.readValue(res, HouseDAO.class).toHouse();
 
                 if(h == null) {
                     h = db.getHouseById(hID).stream().iterator().next().toHouse();
-                    jedis.set(String.format(CACHE_HOUSE_ENTRY_FORMAT, hID), mapper.writeValueAsString(h));
+                    jedis.set(String.format(HouseResource.HOUSE_CACHE_ENTRY_FORMAT, hID), mapper.writeValueAsString(h));
                 }
 
                 houses.add(h);
