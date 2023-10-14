@@ -68,7 +68,6 @@ public class UserResource {
                     return u;
                 }
 
-
                 CosmosDBLayer db = CosmosDBLayer.getInstance();
                 CosmosPagedIterable<UserDAO> resGet = db.getUserById(id);
                 UserDAO uDao = getUser(resGet);
@@ -160,8 +159,7 @@ public class UserResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Set<House> getHouses(@PathParam(ID) String id){
-        try{
-            //TODO: Verify if there are houses in cache, if not just go to database
+        try(Jedis jedis = RedisCache.getCachePool().getResource()){
             CosmosDBLayer db = CosmosDBLayer.getInstance();
             CosmosPagedIterable<UserDAO> resGet = db.getUserById(id);
             UserDAO u = getUser(resGet);
@@ -170,8 +168,19 @@ public class UserResource {
                 throw new Exception("User does not exists.");
 
             Set<House> houses = new HashSet<>();
-            for(String houseID: u.getHouseIds())
-                houses.add(db.getHouseById(houseID).stream().iterator().next().toHouse());
+            for(String hID: u.getHouseIds()) {
+                ObjectMapper mapper = new ObjectMapper();
+                String res = jedis.get("house:" + hID);
+
+                House h = mapper.readValue(res, House.class);
+
+                if(h == null) {
+                    h = db.getHouseById(hID).stream().iterator().next().toHouse();
+                    jedis.set("house:" + hID, mapper.writeValueAsString(h));
+                }
+
+                houses.add(h);
+            }
 
             return houses;
         }catch (Exception e){
