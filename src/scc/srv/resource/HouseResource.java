@@ -79,6 +79,18 @@ public class HouseResource {
     public String createRental(@PathParam(HOUSE_ID) String houseId, Rental rental) {
         try {
             CosmosDBLayer db = CosmosDBLayer.getInstance();
+            CosmosPagedIterable<HouseDAO> resH = db.getHouseById(houseId);
+            HouseDAO h = getHouse(resH);
+            if (h == null) {
+                throw new Exception("House does not exist.");
+            }
+            CosmosPagedIterable<RentalDAO> resR = db.getRentalById(rental.getId());
+            RentalDAO r = getRental(resR);
+            if (r != null) {
+                throw new Exception("Rental already exists.");
+            }
+            db.createRental(new RentalDAO(rental));
+            return rental.getId();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -92,6 +104,18 @@ public class HouseResource {
     public Rental updateRental(@PathParam(HOUSE_ID) String houseId, @PathParam(RENTAL_ID) String rentalId, Rental rental) {
         try {
             CosmosDBLayer db = CosmosDBLayer.getInstance();
+            CosmosPagedIterable<HouseDAO> resH = db.getHouseById(houseId);
+            HouseDAO h = getHouse(resH);
+            if (h == null) {
+                throw new Exception("House does not exist.");
+            }
+            CosmosPagedIterable<RentalDAO> resR = db.getRentalById(rentalId);
+            RentalDAO r = getRental(resR);
+            if (r == null) {
+                throw new Exception("Rental doesn't exist.");
+            }
+            db.updateRental(new RentalDAO(rental));
+            return rental;
         } catch (Exception e) {
             System.err.println(e.toString());
         }
@@ -104,6 +128,17 @@ public class HouseResource {
     public Rental getRental(@PathParam(HOUSE_ID) String houseId, @PathParam(RENTAL_ID) String rentalId) {
         try {
             CosmosDBLayer db = CosmosDBLayer.getInstance();
+            CosmosPagedIterable<HouseDAO> resH = db.getHouseById(houseId);
+            HouseDAO h = getHouse(resH);
+            if (h == null) {
+                throw new Exception("House does not exist.");
+            }
+            CosmosPagedIterable<RentalDAO> resR = db.getRentalById(rentalId);
+            RentalDAO r = getRental(resR);
+            if (r == null) {
+                throw new Exception("Rental doesn't exist.");
+            }
+            return r.toRental();
         } catch (Exception e) {
             System.err.println(e.toString());
         }
@@ -157,6 +192,11 @@ public class HouseResource {
 
     private HouseDAO getHouse(CosmosPagedIterable<HouseDAO> resGet ){
         Iterator<HouseDAO> it = resGet.stream().iterator();
+        return it.hasNext() ? it.next() : null;
+    }
+
+    private RentalDAO getRental(CosmosPagedIterable<RentalDAO> resGet ){
+        Iterator<RentalDAO> it = resGet.stream().iterator();
         return it.hasNext() ? it.next() : null;
     }
 

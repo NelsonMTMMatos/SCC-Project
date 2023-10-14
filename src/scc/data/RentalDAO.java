@@ -95,6 +95,10 @@ public class RentalDAO {
         this.price = price;
     }
 
+    public Rental toRental(){
+        return new Rental(id, houseId, userId, startDate, endDate, price);
+    }
+
     @Override
     public String toString() {
         return "UserDAO [_rid=" + _rid + ", _ts=" + _ts + ", id=" + id + ", houseId=" + houseId + ", userId=" + userId
