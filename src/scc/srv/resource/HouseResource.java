@@ -38,7 +38,7 @@ public class HouseResource {
             CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(house.getId());
             HouseDAO h = getHouse(resGet);
             if (h != null) {
-                throw new Exception("Rental already exists.");
+                throw new Exception("House already exists.");
             }
             db.createHouse(new HouseDAO(house));
             return house.getId();
@@ -53,6 +53,20 @@ public class HouseResource {
     @Path("/{"+ HOUSE_ID + "}")
     @Produces(MediaType.APPLICATION_JSON)
     public House deleteHouse(@PathParam(HOUSE_ID) String id){
+        try {
+            CosmosDBLayer db = CosmosDBLayer.getInstance();
+            HouseDAO h = (HouseDAO) db.delHouseById(id).getItem();
+
+            if (h == null) {
+                throw new Exception("House didn't exist.");
+            }
+
+            return h.toHouse();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return null;
     }
 
@@ -61,6 +75,21 @@ public class HouseResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public House updateHouse(@PathParam(HOUSE_ID) String id, House house){
+        try {
+            CosmosDBLayer db = CosmosDBLayer.getInstance();
+            CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(house.getId());
+            HouseDAO h = getHouse(resGet);
+
+            if (h == null) {
+                throw new Exception("House didn't exist.");
+            }
+
+            return db.updateHouse(h).getItem().toHouse();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return null;
     }
 
@@ -68,6 +97,21 @@ public class HouseResource {
     @Path("/{"+ HOUSE_ID + "}")
     @Produces(MediaType.APPLICATION_JSON)
     public House getHouse(@PathParam(HOUSE_ID) String id){
+        try {
+            CosmosDBLayer db = CosmosDBLayer.getInstance();
+            CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(id);
+            HouseDAO h = getHouse(resGet);
+
+            if (h == null) {
+                throw new Exception("House didn't exist.");
+            }
+
+            return h.toHouse();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return null;
     }
 
