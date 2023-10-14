@@ -1,15 +1,13 @@
 package scc.srv.resource;
 
-import scc.data.House;
-import scc.data.HouseDAO;
-import scc.data.Question;
-import scc.data.Rental;
+import com.azure.cosmos.util.CosmosPagedIterable;
+import scc.data.*;
 import scc.db.CosmosDBLayer;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.Period;
+import java.util.*;
 
 @Path("/house")
 public class HouseResource {
@@ -18,6 +16,10 @@ public class HouseResource {
     private final String RENTAL_ID = "rentalId";
 
     private final String QUESTION_ID = "questionId";
+
+    private final String LOCATION = "location";
+
+    private final String PERIOD = "period";
 
     private final Map<String, House> houses;
 
@@ -30,6 +32,20 @@ public class HouseResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String createHouse(House house){
+        try {
+
+            CosmosDBLayer db = CosmosDBLayer.getInstance();
+            CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(house.getId());
+            HouseDAO h = getHouse(resGet);
+            if (h != null) {
+                throw new Exception("House already exists.");
+            }
+            db.createHouse(new HouseDAO(house));
+            return house.getId();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
@@ -37,6 +53,20 @@ public class HouseResource {
     @Path("/{"+ HOUSE_ID + "}")
     @Produces(MediaType.APPLICATION_JSON)
     public House deleteHouse(@PathParam(HOUSE_ID) String id){
+        try {
+            CosmosDBLayer db = CosmosDBLayer.getInstance();
+            HouseDAO h = (HouseDAO) db.delHouseById(id).getItem();
+
+            if (h == null) {
+                throw new Exception("House didn't exist.");
+            }
+
+            return h.toHouse();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return null;
     }
 
@@ -45,6 +75,21 @@ public class HouseResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public House updateHouse(@PathParam(HOUSE_ID) String id, House house){
+        try {
+            CosmosDBLayer db = CosmosDBLayer.getInstance();
+            CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(house.getId());
+            HouseDAO h = getHouse(resGet);
+
+            if (h == null) {
+                throw new Exception("House didn't exist.");
+            }
+
+            return db.updateHouse(h).getItem().toHouse();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return null;
     }
 
@@ -52,6 +97,21 @@ public class HouseResource {
     @Path("/{"+ HOUSE_ID + "}")
     @Produces(MediaType.APPLICATION_JSON)
     public House getHouse(@PathParam(HOUSE_ID) String id){
+        try {
+            CosmosDBLayer db = CosmosDBLayer.getInstance();
+            CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(id);
+            HouseDAO h = getHouse(resGet);
+
+            if (h == null) {
+                throw new Exception("House didn't exist.");
+            }
+
+            return h.toHouse();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return null;
     }
 
@@ -63,6 +123,18 @@ public class HouseResource {
     public String createRental(@PathParam(HOUSE_ID) String houseId, Rental rental) {
         try {
             CosmosDBLayer db = CosmosDBLayer.getInstance();
+            CosmosPagedIterable<HouseDAO> resH = db.getHouseById(houseId);
+            HouseDAO h = getHouse(resH);
+            if (h == null) {
+                throw new Exception("House does not exist.");
+            }
+            CosmosPagedIterable<RentalDAO> resR = db.getRentalById(rental.getId());
+            RentalDAO r = getRental(resR);
+            if (r != null) {
+                throw new Exception("Rental already exists.");
+            }
+            db.createRental(new RentalDAO(rental));
+            return rental.getId();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -73,9 +145,21 @@ public class HouseResource {
     @Path("/{"+ HOUSE_ID + "}/rental/{" + RENTAL_ID + "}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String updateRental(@PathParam(HOUSE_ID) String houseId, @PathParam(RENTAL_ID) String rentalId, Rental rental) {
+    public Rental updateRental(@PathParam(HOUSE_ID) String houseId, @PathParam(RENTAL_ID) String rentalId, Rental rental) {
         try {
             CosmosDBLayer db = CosmosDBLayer.getInstance();
+            CosmosPagedIterable<HouseDAO> resH = db.getHouseById(houseId);
+            HouseDAO h = getHouse(resH);
+            if (h == null) {
+                throw new Exception("House does not exist.");
+            }
+            CosmosPagedIterable<RentalDAO> resR = db.getRentalById(rentalId);
+            RentalDAO r = getRental(resR);
+            if (r == null) {
+                throw new Exception("Rental doesn't exist.");
+            }
+            db.updateRental(new RentalDAO(rental));
+            return rental;
         } catch (Exception e) {
             System.err.println(e.toString());
         }
@@ -85,9 +169,20 @@ public class HouseResource {
     @GET
     @Path("/{"+ HOUSE_ID + "}/rental/{" + RENTAL_ID + "}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String getRental(@PathParam(HOUSE_ID) String houseId, @PathParam(RENTAL_ID) String rentalId) {
+    public Rental getRental(@PathParam(HOUSE_ID) String houseId, @PathParam(RENTAL_ID) String rentalId) {
         try {
             CosmosDBLayer db = CosmosDBLayer.getInstance();
+            CosmosPagedIterable<HouseDAO> resH = db.getHouseById(houseId);
+            HouseDAO h = getHouse(resH);
+            if (h == null) {
+                throw new Exception("House does not exist.");
+            }
+            CosmosPagedIterable<RentalDAO> resR = db.getRentalById(rentalId);
+            RentalDAO r = getRental(resR);
+            if (r == null) {
+                throw new Exception("Rental doesn't exist.");
+            }
+            return r.toRental();
         } catch (Exception e) {
             System.err.println(e.toString());
         }
@@ -106,7 +201,6 @@ public class HouseResource {
     @POST
     @Path("/{"+ HOUSE_ID + "}/question/{" + QUESTION_ID + "}")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public String replyToQuestion(@PathParam(HOUSE_ID) String houseId, @PathParam(QUESTION_ID) String questionId, String reply){
         return null;
     }
@@ -114,8 +208,40 @@ public class HouseResource {
     @GET
     @Path("/{"+ HOUSE_ID + "}/question")
     @Produces(MediaType.APPLICATION_JSON)
-    public String listQuestions(@PathParam(HOUSE_ID) String houseId){
+    public Set<String> listQuestions(@PathParam(HOUSE_ID) String houseId){
         return null;
+    }
+
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Set<House> availableHousesByLocation(@QueryParam(LOCATION) String location){
+        return null;
+    }
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Set<House> availableHousesByPeriodAndLocation(@QueryParam(LOCATION) String location, @QueryParam(PERIOD) Period period){
+        return null;
+    }
+
+    @GET
+    @Path("/{"+ HOUSE_ID + "}/rental/{" + RENTAL_ID + "}/discounted")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Set<Rental> discountedRentals(@PathParam(HOUSE_ID) String houseId, @QueryParam(PERIOD) Period period){
+        return null;
+    }
+
+    private HouseDAO getHouse(CosmosPagedIterable<HouseDAO> resGet ){
+        Iterator<HouseDAO> it = resGet.stream().iterator();
+        return it.hasNext() ? it.next() : null;
+    }
+
+    private RentalDAO getRental(CosmosPagedIterable<RentalDAO> resGet ){
+        Iterator<RentalDAO> it = resGet.stream().iterator();
+        return it.hasNext() ? it.next() : null;
     }
 
 }
