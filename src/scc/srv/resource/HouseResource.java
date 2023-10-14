@@ -1,9 +1,7 @@
 package scc.srv.resource;
 
-import scc.data.House;
-import scc.data.HouseDAO;
-import scc.data.Question;
-import scc.data.Rental;
+import com.azure.cosmos.util.CosmosPagedIterable;
+import scc.data.*;
 import scc.db.CosmosDBLayer;
 
 import javax.ws.rs.*;
@@ -30,6 +28,20 @@ public class HouseResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String createHouse(House house){
+        try {
+
+            CosmosDBLayer db = CosmosDBLayer.getInstance();
+            CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(house.getId());
+            HouseDAO h = getHouse(resGet);
+            if (h != null) {
+                throw new Exception("Rental already exists.");
+            }
+            db.createHouse(new HouseDAO(house));
+            return house.getId();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
