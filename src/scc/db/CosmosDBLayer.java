@@ -86,6 +86,7 @@ public class CosmosDBLayer {
 		return users.queryItems("SELECT * FROM users ", new CosmosQueryRequestOptions(), UserDAO.class);
 	}
 
+
 	public CosmosItemResponse<HouseDAO> createHouse(HouseDAO house){
 		init();
 		return houses.createItem(house);
