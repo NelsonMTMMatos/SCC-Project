@@ -4,22 +4,22 @@ public class QuestionDAO {
 
     private String _rid;
     private String _ts;
-    String houseId;
-
-    String userId;
-
-    String questionContent;
-
-    String replyContent;
+    private String id;
+    private String houseId;
+    private String userId;
+    private String questionContent;
+    private String replyContent;
 
     public QuestionDAO(){
     }
 
     public QuestionDAO(Question q){
-        this(q.getHouseId(), q.getUserId(), q.getQuestionContent());
+        this(q.getId(), q.getHouseId(), q.getUserId(), q.getQuestionContent());
     }
 
-    public QuestionDAO(String houseId, String userId, String questionContent){
+    public QuestionDAO(String id, String houseId, String userId, String questionContent){
+        super();
+        this.id = id;
         this.houseId = houseId;
         this.userId = userId;
         this.questionContent = questionContent;
@@ -38,6 +38,10 @@ public class QuestionDAO {
         this._ts = _ts;
     }
 
+    public String getId() { return id; }
+    public void setId(String id) {
+        this.id = id;
+    }
     public String getHouseId() {
         return houseId;
     }
@@ -64,11 +68,8 @@ public class QuestionDAO {
 
     @Override
     public String toString() {
-        return "Question{" +
-                "houseId='" + houseId + '\'' +
-                ", userId='" + userId + '\'' +
-                ", questionContent='" + questionContent + '\'' +
-                ", replyContent='" + replyContent + '\'' +
-                '}';
+        return "Question[id=" + id + ", houseId=" + houseId + ", userId=" + userId +
+                ", questionContent=" + questionContent + ", replyContent=" + replyContent +
+                "]";
     }
 }

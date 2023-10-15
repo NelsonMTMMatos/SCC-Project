@@ -8,6 +8,7 @@ import redis.clients.jedis.Jedis;
 import scc.cache.RedisCache;
 import scc.data.*;
 import scc.db.CosmosDBLayer;
+import scc.utils.Helpers;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -33,6 +34,8 @@ public class HouseResource {
 
     private final String RENTAL_CACHE_ENTRY_FORMAT = "rental:%s";
 
+    private final String QUESTION_CACHE_ENTRY_FORMAT = "question:%s";
+
     private final Map<String, House> houses;
 
     public HouseResource(){
@@ -55,7 +58,7 @@ public class HouseResource {
 
             CosmosDBLayer db = CosmosDBLayer.getInstance();
             CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(id);
-            HouseDAO hDAO = getHouse(resGet);
+            HouseDAO hDAO = Helpers.getItem(resGet);
 
             if (hDAO != null) {
                 throw new Exception("House already exists.");
@@ -138,7 +141,7 @@ public class HouseResource {
             }else{
                 CosmosDBLayer db = CosmosDBLayer.getInstance();
                 CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(id);
-                hDAO = getHouse(resGet);
+                hDAO = Helpers.getItem(resGet);
 
                 if (hDAO == null) {
                     throw new Exception("House didn't exist.");
@@ -170,7 +173,7 @@ public class HouseResource {
 
             if (hRes == null) {
                 CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(houseId);
-                HouseDAO hDAO = getHouse(resGet);
+                HouseDAO hDAO = Helpers.getItem(resGet);
 
                 if (hDAO == null) {
                     throw new Exception("House does not exist.");
@@ -185,7 +188,7 @@ public class HouseResource {
             }
 
             CosmosPagedIterable<RentalDAO> resR = db.getRentalById(rental.getId());
-            RentalDAO rDAO = getRental(resR);
+            RentalDAO rDAO = Helpers.getItem(resR);
 
             if (rDAO != null) {
                 throw new Exception("Rental already exists.");
@@ -218,7 +221,7 @@ public class HouseResource {
 
             if (hRes == null) {
                 CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(houseId);
-                HouseDAO hDAO = getHouse(resGet);
+                HouseDAO hDAO = Helpers.getItem(resGet);
 
                 if (hDAO == null) {
                     throw new Exception("House does not exist.");
@@ -255,7 +258,7 @@ public class HouseResource {
 
             if (hRes == null) {
                 CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(houseId);
-                HouseDAO hDAO = getHouse(resGet);
+                HouseDAO hDAO = Helpers.getItem(resGet);
 
                 if (hDAO == null) {
                     throw new Exception("House does not exist.");
@@ -271,7 +274,7 @@ public class HouseResource {
                 rDAO = mapper.readValue(res, RentalDAO.class);
             } else {
                 CosmosPagedIterable<RentalDAO> resR = db.getRentalById(rentalId);
-                rDAO = getRental(resR);
+                rDAO = Helpers.getItem(resR);
                 if (rDAO == null) {
                     throw new Exception("Rental does not exist.");
                 }
@@ -291,20 +294,111 @@ public class HouseResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String createQuestion(@PathParam(HOUSE_ID) String houseId, Question question){
+        try(Jedis jedis = RedisCache.getCachePool().getResource()){
+            CosmosDBLayer db = CosmosDBLayer.getInstance();
+
+            String houseIdInCache = String.format(HOUSE_CACHE_ENTRY_FORMAT, houseId);
+            String hRes = jedis.get(houseIdInCache);
+
+            if (hRes == null) {
+                CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(houseId);
+                HouseDAO hDAO = Helpers.getItem(resGet);
+
+                if (hDAO == null) {
+                    throw new Exception("House does not exist.");
+                }
+            }
+
+            String questionIdInCache = String.format(QUESTION_CACHE_ENTRY_FORMAT, question.getHouseId());
+            String qRes = jedis.get(questionIdInCache);
+
+            if(qRes != null) throw new Exception("Question already exists.");
+
+            QuestionDAO newQuestion = new QuestionDAO(question);
+
+            db.createQuestion(newQuestion);
+            jedis.set(questionIdInCache, new ObjectMapper().writeValueAsString(newQuestion));
+
+            return newQuestion.getId();
+        }catch (Exception e) {
+            System.err.println(e.toString());
+        }
+
         return null;
     }
 
     @PUT
     @Path("/{"+ HOUSE_ID + "}/question/{" + QUESTION_ID + "}")
     @Consumes(MediaType.APPLICATION_JSON)
-    public String replyToQuestion(@PathParam(HOUSE_ID) String houseId, @PathParam(QUESTION_ID) String questionId, String reply){
-        return null;
+    public void replyToQuestion(@PathParam(HOUSE_ID) String houseId, @PathParam(QUESTION_ID) String questionId, String reply){
+        try(Jedis jedis = RedisCache.getCachePool().getResource()){
+            CosmosDBLayer db = CosmosDBLayer.getInstance();
+
+            String houseIdInCache = String.format(HOUSE_CACHE_ENTRY_FORMAT, houseId);
+            String hRes = jedis.get(houseIdInCache);
+
+            if (hRes == null) {
+                CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(houseId);
+                HouseDAO hDAO = Helpers.getItem(resGet);
+
+                if (hDAO == null) {
+                    throw new Exception("House does not exist.");
+                }
+            }
+
+            String questionIdInCache = String.format(QUESTION_CACHE_ENTRY_FORMAT, questionId);
+            String qRes = jedis.get(questionIdInCache);
+
+            QuestionDAO qDao = new QuestionDAO();
+            if(qRes == null){
+                CosmosPagedIterable<QuestionDAO> resGet = db.getQuestionById(questionId);
+                qDao = Helpers.getItem(resGet);
+
+                if (qDao == null) {
+                    throw new Exception("Question does not exist.");
+                }
+            }
+
+            qDao.setReplyContent(reply);
+            db.replyToQuestion(qDao);
+            jedis.set(questionIdInCache, new ObjectMapper().writeValueAsString(qDao));
+        }catch (CosmosException e) {
+            if (e.getStatusCode() == 404) {
+                logger.severe("Question doesn't exist.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @GET
     @Path("/{"+ HOUSE_ID + "}/question")
     @Produces(MediaType.APPLICATION_JSON)
     public Set<String> listQuestions(@PathParam(HOUSE_ID) String houseId){
+        try(Jedis jedis = RedisCache.getCachePool().getResource()){
+            CosmosDBLayer db = CosmosDBLayer.getInstance();
+
+            String houseIdInCache = String.format(HOUSE_CACHE_ENTRY_FORMAT, houseId);
+            String hRes = jedis.get(houseIdInCache);
+
+            HouseDAO hDAO = new HouseDAO();
+            if (hRes == null) {
+                CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(houseId);
+                hDAO = Helpers.getItem(resGet);
+
+                if (hDAO == null) {
+                    throw new Exception("House does not exist.");
+                }
+            }
+
+            Set<String> questions = new HashSet<>();
+            for (String questionID: hDAO.getQuestionIds())
+                questions.add(db.getQuestionById(questionID).stream().iterator().next().getQuestionContent());
+
+            return questions;
+        }catch (Exception e){
+            System.err.println(e.toString());
+        }
         return null;
     }
 
@@ -328,16 +422,6 @@ public class HouseResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Set<Rental> discountedRentals(@PathParam(HOUSE_ID) String houseId, @QueryParam(PERIOD) Period period){
         return null;
-    }
-
-    private HouseDAO getHouse(CosmosPagedIterable<HouseDAO> resGet ){
-        Iterator<HouseDAO> it = resGet.stream().iterator();
-        return it.hasNext() ? it.next() : null;
-    }
-
-    private RentalDAO getRental(CosmosPagedIterable<RentalDAO> resGet ){
-        Iterator<RentalDAO> it = resGet.stream().iterator();
-        return it.hasNext() ? it.next() : null;
     }
 
 }
