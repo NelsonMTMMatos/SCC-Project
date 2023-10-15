@@ -1,22 +1,26 @@
 package scc.data;
 
+import java.util.Arrays;
+
 public class House {
 
     private String id;
     private String name;
     private String location;
     private String description;
-    private String photoId;
+    private String[] photoIds;
 
-    public House() {
-    }
+    private String[] questionIds;
 
-    public House(String id, String name, String location, String description, String photoId) {
+    public House() {}
+
+    public House(String id, String name, String location, String description, String[] photoIds, String[] questionIds) {
         this.id = id;
         this.name = name;
         this.location = location;
         this.description = description;
-        this.photoId = photoId;
+        this.photoIds = photoIds;
+        this.questionIds = questionIds;
     }
 
     public String getId() {
@@ -52,12 +56,20 @@ public class House {
         this.description = description;
     }
 
-    public String getPhotoId() {
-        return photoId;
+    public String[] getPhotoIds() {
+        return photoIds == null ? new String[0] : photoIds;
     }
 
-    public void setPhotoId(String photoId) {
-        this.photoId = photoId;
+    public void setPhotoIds(String[] photoIds) {
+        this.photoIds = photoIds;
+    }
+
+    public String[] getQuestionIds() {
+        return questionIds == null ? new String[0] : questionIds;
+    }
+
+    public void setQuestionIds(String[] questionIds) {
+        this.questionIds = questionIds;
     }
 
     @Override
@@ -67,7 +79,8 @@ public class House {
                 ", name='" + name + '\'' +
                 ", location='" + location + '\'' +
                 ", description='" + description + '\'' +
-                ", photoId='" + photoId + '\'' +
+                ", photoIds='" + Arrays.toString(photoIds) + '\'' +
+                ", questionIds='" + Arrays.toString(questionIds) +
                 '}';
     }
 

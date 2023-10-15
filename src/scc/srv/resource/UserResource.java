@@ -9,6 +9,7 @@ import scc.data.HouseDAO;
 import scc.data.User;
 import scc.data.UserDAO;
 import scc.db.CosmosDBLayer;
+import scc.utils.Helpers;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -27,20 +28,21 @@ public class UserResource {
     @Produces(MediaType.APPLICATION_JSON)
     public String createUser(User user){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
-            String res = jedis.get(String.format(USER_CACHE_ENTRY_FORMAT, user.getId()));
+            String userIdInCache = String.format(USER_CACHE_ENTRY_FORMAT, user.getId());
+            String res = jedis.get(userIdInCache);
 
             if(res != null) throw new Exception("User already exists.");
 
             CosmosDBLayer db = CosmosDBLayer.getInstance();
             CosmosPagedIterable<UserDAO> resGet = db.getUserById(user.getId());
-            UserDAO uDao = getUser(resGet);
+            UserDAO uDao = Helpers.getItem(resGet);
 
             if(uDao != null) throw new Exception("User already exists.");
 
             UserDAO newUser = new UserDAO(user);
 
             db.createUser(newUser);
-            jedis.set(String.format(USER_CACHE_ENTRY_FORMAT, user.getId()), new ObjectMapper().writeValueAsString(newUser));
+            jedis.set(userIdInCache, new ObjectMapper().writeValueAsString(newUser));
 
             return newUser.getId();
         }catch (Exception e){
@@ -57,7 +59,7 @@ public class UserResource {
             try(Jedis jedis = RedisCache.getCachePool().getResource()){
                 CosmosDBLayer db = CosmosDBLayer.getInstance();
                 CosmosPagedIterable<UserDAO> resGet = db.getUserById(id);
-                UserDAO uDao = getUser(resGet);
+                UserDAO uDao = Helpers.getItem(resGet);
 
                 if(uDao == null)
                     throw new Exception("User does not exists.");
@@ -83,7 +85,7 @@ public class UserResource {
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
             CosmosDBLayer db = CosmosDBLayer.getInstance();
             CosmosPagedIterable<UserDAO> resGet = db.getUserById(id);
-            UserDAO uDao = getUser(resGet);
+            UserDAO uDao = Helpers.getItem(resGet);
 
             if(uDao == null)
                 throw new Exception("User does not exists.");
@@ -109,7 +111,8 @@ public class UserResource {
     public User getUserById(@PathParam(ID) String id, @QueryParam(PWD) String pwd){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
             ObjectMapper mapper = new ObjectMapper();
-            String res = jedis.get(String.format(USER_CACHE_ENTRY_FORMAT, id));
+            String userIdInCache = String.format(USER_CACHE_ENTRY_FORMAT, id);
+            String res = jedis.get(userIdInCache);
             UserDAO uDao;
 
             if(res != null)
@@ -117,7 +120,7 @@ public class UserResource {
             else{
                 CosmosDBLayer db = CosmosDBLayer.getInstance();
                 CosmosPagedIterable<UserDAO> resGet = db.getUserById(id);
-                uDao = getUser(resGet);
+                uDao = Helpers.getItem(resGet);
 
                 if(uDao == null)
                     throw new Exception("User does not exists.");
@@ -126,7 +129,7 @@ public class UserResource {
             if (!uDao.getPwd().equals(pwd))
                 throw new Exception("Password does not match.");
 
-            jedis.set(String.format(USER_CACHE_ENTRY_FORMAT, id), mapper.writeValueAsString(uDao));
+            jedis.set(userIdInCache, mapper.writeValueAsString(uDao));
 
             return uDao.toUser();
         }catch (Exception e){
@@ -143,7 +146,7 @@ public class UserResource {
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
             CosmosDBLayer db = CosmosDBLayer.getInstance();
             CosmosPagedIterable<UserDAO> resGet = db.getUserById(id);
-            UserDAO u = getUser(resGet);
+            UserDAO u = Helpers.getItem(resGet);
 
             if(u == null)
                 throw new Exception("User does not exists.");
@@ -151,13 +154,14 @@ public class UserResource {
             Set<House> houses = new HashSet<>();
             for(String hID: u.getHouseIds()) {
                 ObjectMapper mapper = new ObjectMapper();
-                String res = jedis.get(String.format(HouseResource.HOUSE_CACHE_ENTRY_FORMAT, hID));
+                String houseIdInCache = String.format(HouseResource.HOUSE_CACHE_ENTRY_FORMAT, hID);
+                String res = jedis.get(houseIdInCache);
 
                 House h = mapper.readValue(res, HouseDAO.class).toHouse();
 
                 if(h == null) {
                     h = db.getHouseById(hID).stream().iterator().next().toHouse();
-                    jedis.set(String.format(HouseResource.HOUSE_CACHE_ENTRY_FORMAT, hID), mapper.writeValueAsString(h));
+                    jedis.set(houseIdInCache, mapper.writeValueAsString(h));
                 }
 
                 houses.add(h);
@@ -170,13 +174,4 @@ public class UserResource {
 
         return null;
     }
-
-    private UserDAO getUser(CosmosPagedIterable<UserDAO> resGet ){
-        Iterator<UserDAO> it = resGet.stream().iterator();
-        return it.hasNext() ? it.next() : null;
-    }
-
-
-
-
 }

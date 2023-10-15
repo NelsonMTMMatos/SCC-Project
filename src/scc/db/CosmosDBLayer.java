@@ -11,15 +11,12 @@ import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.util.CosmosPagedIterable;
 
-import scc.data.HouseDAO;
-import scc.data.RentalDAO;
-import scc.data.UserDAO;
+import scc.data.*;
 
 public class CosmosDBLayer {
 	private static final String CONNECTION_URL = "https://scc232460665.documents.azure.com:443/";
 	private static final String DB_KEY = "3OQYJPlyi5kfhenKoKWuL1iCmeVcIcYnZhIH2TtQhXBIRIqluDTOeX24lMr6TyvIhunvOjOBgk8sACDbissptQ==";
 	private static final String DB_NAME = "scc2324";
-	
 	private static CosmosDBLayer instance;
 
 	public static synchronized CosmosDBLayer getInstance() {
@@ -43,7 +40,7 @@ public class CosmosDBLayer {
 	
 	private CosmosClient client;
 	private CosmosDatabase db;
-	private CosmosContainer users, houses, rentals;
+	private CosmosContainer users, houses, rentals, periods, questions;
 	
 	public CosmosDBLayer(CosmosClient client) {
 		this.client = client;
@@ -56,6 +53,8 @@ public class CosmosDBLayer {
 		users = db.getContainer("users");
 		houses = db.getContainer("houses");
 		rentals = db.getContainer("rentals");
+		periods = db.getContainer("periods");
+		questions = db.getContainer("questions");
 		
 	}
 
@@ -128,6 +127,32 @@ public class CosmosDBLayer {
 	public CosmosPagedIterable<RentalDAO> getRentalById(String id){
 		init();
 		return rentals.queryItems("SELECT * FROM rentals WHERE rentals.id=\"" + id + "\"", new CosmosQueryRequestOptions(), RentalDAO.class);
+	}
+
+	public CosmosItemResponse<PeriodDAO> createPeriod(PeriodDAO period){
+		init();
+		return periods.createItem(period);
+	}
+
+	public CosmosItemResponse<QuestionDAO> createQuestion(QuestionDAO question){
+		init();
+		return questions.createItem(question);
+	}
+
+	public CosmosItemResponse<QuestionDAO> replyToQuestion(QuestionDAO question){
+		init();
+		PartitionKey key = new PartitionKey(question.getId());
+		return questions.replaceItem(question, question.getId(), key, new CosmosItemRequestOptions());
+	}
+
+	public CosmosPagedIterable<QuestionDAO> getQuestions(){
+		init();
+		return questions.queryItems("SELECT * FROM questions", new CosmosQueryRequestOptions(), QuestionDAO.class);
+	}
+
+	public CosmosPagedIterable<QuestionDAO> getQuestionById(String id){
+		init();
+		return questions.queryItems("SELECT * FROM questions WHERE rentals.id=\"" + id + "\"", new CosmosQueryRequestOptions(), QuestionDAO.class);
 	}
 
 	public void close() {
