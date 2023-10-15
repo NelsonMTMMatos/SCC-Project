@@ -1,6 +1,11 @@
 package scc.srv.resource;
 
+import com.azure.cosmos.CosmosException;
 import com.azure.cosmos.util.CosmosPagedIterable;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.logging.log4j.simple.SimpleLogger;
+import redis.clients.jedis.Jedis;
+import scc.cache.RedisCache;
 import scc.data.*;
 import scc.db.CosmosDBLayer;
 
@@ -8,9 +13,12 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.time.Period;
 import java.util.*;
+import java.util.logging.Logger;
 
 @Path("/house")
 public class HouseResource {
+
+    private static final Logger logger = Logger.getLogger(HouseResource.class.getName());
 
     private final String HOUSE_ID = "houseId";
     private final String RENTAL_ID = "rentalId";
@@ -20,6 +28,10 @@ public class HouseResource {
     private final String LOCATION = "location";
 
     private final String PERIOD = "period";
+
+    public static final String HOUSE_CACHE_ENTRY_FORMAT = "house:%s";
+
+    private final String RENTAL_CACHE_ENTRY_FORMAT = "rental:%s";
 
     private final Map<String, House> houses;
 
@@ -32,20 +44,33 @@ public class HouseResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String createHouse(House house){
-        try {
+        try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-            CosmosDBLayer db = CosmosDBLayer.getInstance();
-            CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(house.getId());
-            HouseDAO h = getHouse(resGet);
-            if (h != null) {
+            String id = house.getId();
+            String idInCache = String.format(HOUSE_CACHE_ENTRY_FORMAT, id);
+
+            if (jedis.get(idInCache) != null) {
                 throw new Exception("House already exists.");
             }
-            db.createHouse(new HouseDAO(house));
-            return house.getId();
 
+            CosmosDBLayer db = CosmosDBLayer.getInstance();
+            CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(id);
+            HouseDAO hDAO = getHouse(resGet);
+
+            if (hDAO != null) {
+                throw new Exception("House already exists.");
+            }
+
+            hDAO = new HouseDAO(house);
+            db.createHouse(hDAO);
+
+            jedis.set(idInCache, new ObjectMapper().writeValueAsString(hDAO));
+
+            return id;
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return null;
     }
 
@@ -53,16 +78,18 @@ public class HouseResource {
     @Path("/{"+ HOUSE_ID + "}")
     @Produces(MediaType.APPLICATION_JSON)
     public House deleteHouse(@PathParam(HOUSE_ID) String id){
-        try {
+        try(Jedis jedis = RedisCache.getCachePool().getResource()) {
+
             CosmosDBLayer db = CosmosDBLayer.getInstance();
-            HouseDAO h = (HouseDAO) db.delHouseById(id).getItem();
 
-            if (h == null) {
-                throw new Exception("House didn't exist.");
+            jedis.del(String.format(HOUSE_CACHE_ENTRY_FORMAT, id));
+            HouseDAO hDAO = (HouseDAO) db.delHouseById(id).getItem();
+
+            return hDAO.toHouse();
+        } catch (CosmosException e){
+            if (e.getStatusCode() == 404) {
+                logger.severe("House doesn't exist.");
             }
-
-            return h.toHouse();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -75,17 +102,19 @@ public class HouseResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public House updateHouse(@PathParam(HOUSE_ID) String id, House house){
-        try {
+        try(Jedis jedis = RedisCache.getCachePool().getResource()) {
+
             CosmosDBLayer db = CosmosDBLayer.getInstance();
-            CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(house.getId());
-            HouseDAO h = getHouse(resGet);
+            HouseDAO hDAO = db.updateHouse(new HouseDAO(house)).getItem();
 
-            if (h == null) {
-                throw new Exception("House didn't exist.");
+            String idInCache = String.format(HOUSE_CACHE_ENTRY_FORMAT, id);
+            jedis.set(idInCache, new ObjectMapper().writeValueAsString(hDAO));
+
+            return hDAO.toHouse();
+        } catch (CosmosException e) {
+            if (e.getStatusCode() == 404) {
+                logger.severe("House doesn't exist.");
             }
-
-            return db.updateHouse(h).getItem().toHouse();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -97,16 +126,27 @@ public class HouseResource {
     @Path("/{"+ HOUSE_ID + "}")
     @Produces(MediaType.APPLICATION_JSON)
     public House getHouse(@PathParam(HOUSE_ID) String id){
-        try {
-            CosmosDBLayer db = CosmosDBLayer.getInstance();
-            CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(id);
-            HouseDAO h = getHouse(resGet);
+        try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-            if (h == null) {
-                throw new Exception("House didn't exist.");
+            String idInCache = String.format(HOUSE_CACHE_ENTRY_FORMAT, id);
+            String res = jedis.get(idInCache);
+            HouseDAO hDAO;
+            ObjectMapper mapper = new ObjectMapper();
+
+            if (res != null) {
+                hDAO = mapper.readValue(res, HouseDAO.class);
+            }else{
+                CosmosDBLayer db = CosmosDBLayer.getInstance();
+                CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(id);
+                hDAO = getHouse(resGet);
+
+                if (hDAO == null) {
+                    throw new Exception("House didn't exist.");
+                }
             }
 
-            return h.toHouse();
+            jedis.set(idInCache, mapper.writeValueAsString(hDAO));
+            return hDAO.toHouse();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -197,7 +237,7 @@ public class HouseResource {
                 logger.severe("Rental doesn't exist.");
             }
         } catch (Exception e) {
-            System.err.println(e.toString());
+            e.printStackTrace();
         }
         return null;
     }
@@ -254,7 +294,7 @@ public class HouseResource {
         return null;
     }
 
-    @POST
+    @P
     @Path("/{"+ HOUSE_ID + "}/question/{" + QUESTION_ID + "}")
     @Consumes(MediaType.APPLICATION_JSON)
     public String replyToQuestion(@PathParam(HOUSE_ID) String houseId, @PathParam(QUESTION_ID) String questionId, String reply){
