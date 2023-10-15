@@ -13,6 +13,12 @@ import com.azure.cosmos.util.CosmosPagedIterable;
 
 import scc.data.*;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 public class CosmosDBLayer {
 	private static final String CONNECTION_URL = "https://scc232460665.documents.azure.com:443/";
 	private static final String DB_KEY = "3OQYJPlyi5kfhenKoKWuL1iCmeVcIcYnZhIH2TtQhXBIRIqluDTOeX24lMr6TyvIhunvOjOBgk8sACDbissptQ==";
@@ -129,6 +135,36 @@ public class CosmosDBLayer {
 		return rentals.queryItems("SELECT * FROM rentals WHERE rentals.id=\"" + id + "\"", new CosmosQueryRequestOptions(), RentalDAO.class);
 	}
 
+	public CosmosPagedIterable<HouseDAO> getHousesByLocation(String location){
+		init();
+		String query = String.format("SELECT * FROM houses WHERE houses.location=%s", location);
+		return houses.queryItems(query, new CosmosQueryRequestOptions(), HouseDAO.class);
+	}
+
+	public List<HouseDAO> getHousesByPeriodAndLocation(LocalDate startDate, LocalDate endDate, String location){
+		init();
+		DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-ddTHH:mm:ss.fffffffZ");
+		String start_date = startDate.format(format);
+		String end_date = endDate.format(format);
+
+		String periodQuery = String.format("SELECT DISTINCT periods.house_id FROM periods WHERE NOT (periods.start_date <= %s AND periods.end_date >= %s)", start_date, end_date);
+
+		CosmosPagedIterable<String> houseIds= periods.queryItems(periodQuery, new CosmosQueryRequestOptions(), String.class);
+
+		List<HouseDAO> availableHouses = new ArrayList<>();
+		for (String houseId : houseIds) {
+			String houseQuery = String.format("SELECT * FROM houses WHERE houses.id = %s AND houses.location = %s", houseId, location);
+
+			CosmosPagedIterable<HouseDAO> houses = this.houses.queryItems(houseQuery, new CosmosQueryRequestOptions(), HouseDAO.class);
+
+			for (HouseDAO house : houses) {
+				availableHouses.add(house);
+			}
+		}
+
+		return availableHouses;
+  }
+  
 	public CosmosItemResponse<PeriodDAO> createPeriod(PeriodDAO period){
 		init();
 		return periods.createItem(period);
