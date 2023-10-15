@@ -294,7 +294,7 @@ public class HouseResource {
         return null;
     }
 
-    @P
+    @PUT
     @Path("/{"+ HOUSE_ID + "}/question/{" + QUESTION_ID + "}")
     @Consumes(MediaType.APPLICATION_JSON)
     public String replyToQuestion(@PathParam(HOUSE_ID) String houseId, @PathParam(QUESTION_ID) String questionId, String reply){
