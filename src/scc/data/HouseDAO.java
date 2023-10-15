@@ -1,5 +1,7 @@
 package scc.data;
 
+import java.util.Arrays;
+
 public class HouseDAO {
 
     private String _rid;
@@ -8,19 +10,22 @@ public class HouseDAO {
     private String name;
     private String location;
     private String description;
-    private String photoId;
+    private String[] photoIds;
+
+    private String[] questionIds;
 
     public HouseDAO(){
     }
 
-    public HouseDAO(House h){ this(h.getId(), h.getName(), h.getLocation(), h.getDescription(), h.getPhotoId()); }
+    public HouseDAO(House h){ this(h.getId(), h.getName(), h.getLocation(), h.getDescription(), h.getPhotoIds(), h.getQuestionIds()); }
 
-    public HouseDAO(String id, String name, String location, String description, String photoId) {
+    public HouseDAO(String id, String name, String location, String description, String[] photoIds, String[] questionIds) {
         this.id = id;
         this.name = name;
         this.location = location;
         this.description = description;
-        this.photoId = photoId;
+        this.photoIds = photoIds;
+        this.questionIds = questionIds;
     }
 
     public String get_rid() {
@@ -59,14 +64,23 @@ public class HouseDAO {
     public void setDescription(String description) {
         this.description = description;
     }
-    public String getPhotoId() {
-        return photoId;
+    public String[] getPhotoIds() {
+        return photoIds == null ? new String[0] : photoIds;
     }
-    public void setPhotoId(String photoId) {
-        this.photoId = photoId;
+
+    public void setPhotoIds(String[] photoIds) {
+        this.photoIds = photoIds;
+    }
+
+    public String[] getQuestionIds() {
+        return questionIds == null ? new String[0] : questionIds;
+    }
+
+    public void setQuestionIds(String[] questionIds) {
+        this.questionIds = questionIds;
     }
     public House toHouse(){
-        return new House(id, name, location, description, photoId);
+        return new House(id, name, location, description, photoIds, questionIds);
     }
     @Override
     public String toString() {
@@ -75,7 +89,8 @@ public class HouseDAO {
                 ", name='" + name + '\'' +
                 ", location='" + location + '\'' +
                 ", description='" + description + '\'' +
-                ", photoId='" + photoId + '\'' +
+                ", photoIds='" + Arrays.toString(photoIds) + '\'' +
+                ", questionIds='" + Arrays.toString(questionIds) +
                 '}';
     }
 }
