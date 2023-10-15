@@ -121,20 +121,43 @@ public class HouseResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String createRental(@PathParam(HOUSE_ID) String houseId, Rental rental) {
-        try {
+        try(Jedis jedis = RedisCache.getCachePool().getResource()) {
+
             CosmosDBLayer db = CosmosDBLayer.getInstance();
-            CosmosPagedIterable<HouseDAO> resH = db.getHouseById(houseId);
-            HouseDAO h = getHouse(resH);
-            if (h == null) {
-                throw new Exception("House does not exist.");
+
+            String houseIdInCache = String.format(HOUSE_CACHE_ENTRY_FORMAT, houseId);
+            String hRes = jedis.get(houseIdInCache);
+
+            if (hRes == null) {
+                CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(houseId);
+                HouseDAO hDAO = getHouse(resGet);
+
+                if (hDAO == null) {
+                    throw new Exception("House does not exist.");
+                }
             }
-            CosmosPagedIterable<RentalDAO> resR = db.getRentalById(rental.getId());
-            RentalDAO r = getRental(resR);
-            if (r != null) {
+
+            String rentalId = rental.getId();
+            String rentalIdInCache = String.format(RENTAL_CACHE_ENTRY_FORMAT, rentalId);
+
+            if (jedis.get(rentalIdInCache) != null) {
                 throw new Exception("Rental already exists.");
             }
-            db.createRental(new RentalDAO(rental));
-            return rental.getId();
+
+            CosmosPagedIterable<RentalDAO> resR = db.getRentalById(rental.getId());
+            RentalDAO rDAO = getRental(resR);
+
+            if (rDAO != null) {
+                throw new Exception("Rental already exists.");
+            }
+
+            rDAO = new RentalDAO(rental);
+            db.createRental(rDAO);
+
+            jedis.set(rentalIdInCache, new ObjectMapper().writeValueAsString(rDAO));
+
+            return rentalId;
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -146,20 +169,33 @@ public class HouseResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Rental updateRental(@PathParam(HOUSE_ID) String houseId, @PathParam(RENTAL_ID) String rentalId, Rental rental) {
-        try {
+        try(Jedis jedis = RedisCache.getCachePool().getResource()) {
+
             CosmosDBLayer db = CosmosDBLayer.getInstance();
-            CosmosPagedIterable<HouseDAO> resH = db.getHouseById(houseId);
-            HouseDAO h = getHouse(resH);
-            if (h == null) {
-                throw new Exception("House does not exist.");
+
+            String houseIdInCache = String.format(HOUSE_CACHE_ENTRY_FORMAT, houseId);
+            String hRes = jedis.get(houseIdInCache);
+
+            if (hRes == null) {
+                CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(houseId);
+                HouseDAO hDAO = getHouse(resGet);
+
+                if (hDAO == null) {
+                    throw new Exception("House does not exist.");
+                }
             }
-            CosmosPagedIterable<RentalDAO> resR = db.getRentalById(rentalId);
-            RentalDAO r = getRental(resR);
-            if (r == null) {
-                throw new Exception("Rental doesn't exist.");
-            }
-            db.updateRental(new RentalDAO(rental));
+
+            RentalDAO rDAO = new RentalDAO(rental);
+            db.updateRental(rDAO);
+
+            String rentalIdInCache = String.format(RENTAL_CACHE_ENTRY_FORMAT, rentalId);
+            jedis.set(rentalIdInCache, new ObjectMapper().writeValueAsString(rDAO));
+
             return rental;
+        } catch (CosmosException e) {
+            if (e.getStatusCode() == 404) {
+                logger.severe("Rental doesn't exist.");
+            }
         } catch (Exception e) {
             System.err.println(e.toString());
         }
@@ -170,19 +206,39 @@ public class HouseResource {
     @Path("/{"+ HOUSE_ID + "}/rental/{" + RENTAL_ID + "}")
     @Produces(MediaType.APPLICATION_JSON)
     public Rental getRental(@PathParam(HOUSE_ID) String houseId, @PathParam(RENTAL_ID) String rentalId) {
-        try {
+        try(Jedis jedis = RedisCache.getCachePool().getResource()) {
+
             CosmosDBLayer db = CosmosDBLayer.getInstance();
-            CosmosPagedIterable<HouseDAO> resH = db.getHouseById(houseId);
-            HouseDAO h = getHouse(resH);
-            if (h == null) {
-                throw new Exception("House does not exist.");
+
+            String houseIdInCache = String.format(HOUSE_CACHE_ENTRY_FORMAT, houseId);
+            String hRes = jedis.get(houseIdInCache);
+
+            if (hRes == null) {
+                CosmosPagedIterable<HouseDAO> resGet = db.getHouseById(houseId);
+                HouseDAO hDAO = getHouse(resGet);
+
+                if (hDAO == null) {
+                    throw new Exception("House does not exist.");
+                }
             }
-            CosmosPagedIterable<RentalDAO> resR = db.getRentalById(rentalId);
-            RentalDAO r = getRental(resR);
-            if (r == null) {
-                throw new Exception("Rental doesn't exist.");
+
+            String rentalIdInCache = String.format(RENTAL_CACHE_ENTRY_FORMAT, rentalId);
+            ObjectMapper mapper = new ObjectMapper();
+            RentalDAO rDAO;
+
+            String res = jedis.get(rentalIdInCache);
+            if (res != null) {
+                rDAO = mapper.readValue(res, RentalDAO.class);
+            } else {
+                CosmosPagedIterable<RentalDAO> resR = db.getRentalById(rentalId);
+                rDAO = getRental(resR);
+                if (rDAO == null) {
+                    throw new Exception("Rental does not exist.");
+                }
             }
-            return r.toRental();
+
+            jedis.set(rentalIdInCache, mapper.writeValueAsString(rDAO));
+            return rDAO.toRental();
         } catch (Exception e) {
             System.err.println(e.toString());
         }
