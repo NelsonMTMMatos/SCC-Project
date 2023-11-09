@@ -1,5 +1,7 @@
 package scc.data;
 
+import org.mindrot.jbcrypt.BCrypt;
+
 import java.util.Arrays;
 
 /**
@@ -23,7 +25,7 @@ public class UserDAO {
 		super();
 		this.id = id;
 		this.name = name;
-		this.pwd = pwd;
+		this.pwd = BCrypt.hashpw(pwd, BCrypt.gensalt());;
 		this.photoId = photoId;
 		this.houseIds = houseIds;
 	}

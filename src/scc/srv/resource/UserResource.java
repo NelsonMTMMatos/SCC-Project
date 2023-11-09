@@ -2,7 +2,11 @@ package scc.srv.resource;
 
 import com.azure.cosmos.util.CosmosPagedIterable;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.core.NewCookie;
+import jakarta.ws.rs.core.Response;
 import redis.clients.jedis.Jedis;
+import scc.authentication.Login;
+import scc.authentication.Session;
 import scc.cache.RedisCache;
 import scc.data.House;
 import scc.data.HouseDAO;
@@ -22,6 +26,31 @@ public class UserResource {
     private final String PWD = "pwd";
     private final String USER_CACHE_ENTRY_FORMAT = "user:%s";
     public UserResource(){}
+
+    @POST
+    @Path("/auth")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response auth(Login user) {
+        //TODO: Check if user exist in cache or db
+        boolean pwdOk = false;
+        //Check if user has password.
+        //boolean pwdOK = BCrypt.checkpw(plainTextPassword, hashedPassword);
+        if (pwdOk) {
+            String uid = UUID.randomUUID().toString();
+            NewCookie cookie = new NewCookie.Builder("scc:session")
+                    .value(uid)
+                    .path("/")
+                    .comment("sessionid")
+                    .maxAge(3600)
+                    .secure(false)
+                    .httpOnly(true)
+                    .build();
+            RedisCache.putSession(new Session(uid, user.getUsername()));
+            return Response.ok().cookie(cookie).build();
+        } else
+            throw new NotAuthorizedException("Incorrect login");
+    }
+
     @Path("/")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
