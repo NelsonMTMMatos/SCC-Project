@@ -23,4 +23,13 @@ public class ControlResource
 		return "v: 0001";
 	}
 
+
+
+	@Path("/version/1")
+	@GET
+	@Produces(MediaType.TEXT_PLAIN)
+	public String hi() {
+		return "Hello World!";
+	}
+
 }

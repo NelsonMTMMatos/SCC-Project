@@ -6,6 +6,7 @@ import java.util.Set;
 import jakarta.ws.rs.core.Application;
 import scc.srv.resource.ControlResource;
 import scc.srv.resource.MediaResource;
+import scc.srv.resource.UserResource;
 
 public class MainApplication extends Application
 {
@@ -14,6 +15,7 @@ public class MainApplication extends Application
 
 	public MainApplication() {
 		resources.add(ControlResource.class);
+		resources.add(UserResource.class);
 		singletons.add( new MediaResource());
 	}
 

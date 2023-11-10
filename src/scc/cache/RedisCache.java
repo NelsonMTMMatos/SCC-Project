@@ -9,8 +9,8 @@ import scc.authentication.Session;
 import scc.utils.Helpers;
 
 public class RedisCache {
-	private static final String RedisHostname = "scc2324cache4204.redis.cache.windows.net";
-	private static final String RedisKey = "HcR09frYgXC3zVhZUll7F9CdVEiRmwVqlAzCaKC6ujM=";
+	private static final String RedisHostname = "rediswesteurope60483.redis.cache.windows.net";
+	private static final String RedisKey = "j1Qnqn1HuDBrYdkvfnnkuXnQYbcidQ2hiAzCaNEk5No=";
 
 	private static final String SESSION_CACHE_ENTRY_FORMAT = "session:%s";
 	

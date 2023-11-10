@@ -1,16 +1,12 @@
 package scc.srv.resource;
 
-import com.azure.core.util.BinaryData;
 import com.azure.cosmos.util.CosmosPagedIterable;
-import com.azure.storage.blob.BlobClient;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import scc.data.Rental;
 import scc.data.RentalDAO;
-import scc.data.User;
-import scc.data.UserDAO;
 import scc.db.CosmosDBLayer;
-import scc.utils.Hash;
+
 
 import java.util.HashMap;
 import java.util.Iterator;

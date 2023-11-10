@@ -20,9 +20,9 @@ import java.util.List;
 import java.util.Map;
 
 public class CosmosDBLayer {
-	private static final String CONNECTION_URL = "https://scc232460665.documents.azure.com:443/";
-	private static final String DB_KEY = "3OQYJPlyi5kfhenKoKWuL1iCmeVcIcYnZhIH2TtQhXBIRIqluDTOeX24lMr6TyvIhunvOjOBgk8sACDbissptQ==";
-	private static final String DB_NAME = "scc2324";
+	private static final String CONNECTION_URL = "https://scc2460483.documents.azure.com:443/";
+	private static final String DB_KEY = "AccountEndpoint=https://scc2460483.documents.azure.com:443/;AccountKey=wDCcZpLy1dTqAxdjVsoirTq4wekWEcinoGMkFDmpjr5ngDxarLFuRsFd7eWoz9Zve7G9brHpknHaACDb6y0aeg==;";
+	private static final String DB_NAME = "scc24db60483";
 	private static CosmosDBLayer instance;
 
 	public static synchronized CosmosDBLayer getInstance() {
@@ -57,10 +57,10 @@ public class CosmosDBLayer {
 			return;
 		db = client.getDatabase(DB_NAME);
 		users = db.getContainer("users");
-		houses = db.getContainer("houses");
-		rentals = db.getContainer("rentals");
-		periods = db.getContainer("periods");
-		questions = db.getContainer("questions");
+		//houses = db.getContainer("houses");
+		//rentals = db.getContainer("rentals");
+		//periods = db.getContainer("periods");
+		//questions = db.getContainer("questions");
 		
 	}
 

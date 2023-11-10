@@ -2,6 +2,8 @@ package scc.srv.resource;
 
 import com.azure.cosmos.util.CosmosPagedIterable;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
 import redis.clients.jedis.Jedis;
@@ -15,8 +17,7 @@ import scc.data.UserDAO;
 import scc.db.CosmosDBLayer;
 import scc.utils.Helpers;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+
 import java.util.*;
 
 @Path("/user")
@@ -51,10 +52,10 @@ public class UserResource {
             throw new NotAuthorizedException("Incorrect login");
     }
 
-    @Path("/")
+
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
     public String createUser(User user){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
             String userIdInCache = String.format(USER_CACHE_ENTRY_FORMAT, user.getId());
