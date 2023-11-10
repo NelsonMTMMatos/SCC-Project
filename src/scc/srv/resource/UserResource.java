@@ -24,7 +24,6 @@ import java.util.*;
 public class UserResource {
 
     private final String ID = "id";
-    private final String PWD = "pwd";
     private final String USER_CACHE_ENTRY_FORMAT = "user:%s";
     public UserResource(){}
 
@@ -56,7 +55,7 @@ public class UserResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    public String createUser(User user){
+    public Response createUser(User user){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
             String userIdInCache = String.format(USER_CACHE_ENTRY_FORMAT, user.getId());
             String res = jedis.get(userIdInCache);
@@ -74,7 +73,7 @@ public class UserResource {
             db.createUser(newUser);
             jedis.set(userIdInCache, new ObjectMapper().writeValueAsString(newUser));
 
-            return newUser.getId();
+            return Response.ok(newUser.getId()).build();
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -85,7 +84,7 @@ public class UserResource {
     @DELETE
     @Path("/{"+ ID + "}")
     @Produces(MediaType.APPLICATION_JSON)
-    public User deleteUser(@PathParam(ID) String id, @QueryParam(PWD) String pwd){
+    public User deleteUser(@PathParam(ID) String id){
             try(Jedis jedis = RedisCache.getCachePool().getResource()){
                 CosmosDBLayer db = CosmosDBLayer.getInstance();
                 CosmosPagedIterable<UserDAO> resGet = db.getUserById(id);
@@ -93,9 +92,6 @@ public class UserResource {
 
                 if(uDao == null)
                     throw new Exception("User does not exists.");
-
-                if(!uDao.getPwd().equals(pwd))
-                    throw new Exception("Password does not match.");
 
                 db.delUserById(id);
                 jedis.del(String.format(USER_CACHE_ENTRY_FORMAT, id));
@@ -111,7 +107,7 @@ public class UserResource {
     @Path("/{"+ ID + "}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public User updateUser(@PathParam(ID) String id, @QueryParam(PWD) String pwd, User user){
+    public User updateUser(@PathParam(ID) String id, User user){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
             CosmosDBLayer db = CosmosDBLayer.getInstance();
             CosmosPagedIterable<UserDAO> resGet = db.getUserById(id);
@@ -119,9 +115,6 @@ public class UserResource {
 
             if(uDao == null)
                 throw new Exception("User does not exists.");
-
-            if(!uDao.getPwd().equals(pwd))
-                throw new Exception("Password does not match.");
 
             UserDAO newUser = new UserDAO(user);
 
@@ -138,7 +131,7 @@ public class UserResource {
     @GET
     @Path("/{"+ ID + "}")
     @Produces(MediaType.APPLICATION_JSON)
-    public User getUserById(@PathParam(ID) String id, @QueryParam(PWD) String pwd){
+    public User getUserById(@PathParam(ID) String id){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
             ObjectMapper mapper = new ObjectMapper();
             String userIdInCache = String.format(USER_CACHE_ENTRY_FORMAT, id);
@@ -155,9 +148,6 @@ public class UserResource {
                 if(uDao == null)
                     throw new Exception("User does not exists.");
             }
-
-            if (!uDao.getPwd().equals(pwd))
-                throw new Exception("Password does not match.");
 
             jedis.set(userIdInCache, mapper.writeValueAsString(uDao));
 

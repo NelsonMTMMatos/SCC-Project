@@ -18,6 +18,8 @@ public class Period {
 
     private String[] rentalIds;
 
+    public Period(){}
+
     public Period(String id, String houseId, double normalPrice, double discountedPrice, LocalDate startDate, LocalDate endDate, String[] rentalIds) {
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("Start date should be before or equal to end date.");

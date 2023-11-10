@@ -20,9 +20,10 @@ import java.util.List;
 import java.util.Map;
 
 public class CosmosDBLayer {
-	private static final String CONNECTION_URL = "https://scc2460483.documents.azure.com:443/";
-	private static final String DB_KEY = "AccountEndpoint=https://scc2460483.documents.azure.com:443/;AccountKey=wDCcZpLy1dTqAxdjVsoirTq4wekWEcinoGMkFDmpjr5ngDxarLFuRsFd7eWoz9Zve7G9brHpknHaACDb6y0aeg==;";
-	private static final String DB_NAME = "scc24db60483";
+	private static final String CONNECTION_URL = System.getenv("COSMOSDB_URL");
+	private static final String DB_KEY = System.getenv("COSMOSDB_KEY");
+	private static final String DB_NAME = System.getenv("COSMOSDB_DATABASE");
+
 	private static CosmosDBLayer instance;
 
 	public static synchronized CosmosDBLayer getInstance() {

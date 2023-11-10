@@ -25,7 +25,7 @@ import jakarta.ws.rs.core.MediaType;
 @Path("/media")
 public class MediaResource
 {
-	String storageConnectionString = "DefaultEndpointsProtocol=https;AccountName=sccstwesteurope60483;AccountKey=YoeUZKk0fOUhopzhx+50PGWGGNmxTplkNhJdATvwezG6D3dDdjKMH6GWqVyzr9sSF6QbHa3HUbxy+AStqfvisw==;EndpointSuffix=core.windows.net";
+	String storageConnectionString = System.getenv("BlobStoreConnection");
 
 	BlobContainerClient containerClient;
 
