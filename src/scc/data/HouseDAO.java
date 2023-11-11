@@ -11,21 +11,20 @@ public class HouseDAO {
     private String location;
     private String description;
     private String[] photoIds;
-
-    private String[] questionIds;
+    private String ownerId;
 
     public HouseDAO(){
     }
 
-    public HouseDAO(House h){ this(h.getId(), h.getName(), h.getLocation(), h.getDescription(), h.getPhotoIds(), h.getQuestionIds()); }
+    public HouseDAO(House h){ this(h.getId(), h.getName(), h.getLocation(), h.getDescription(), h.getPhotoIds(), h.getOwnerId()); }
 
-    public HouseDAO(String id, String name, String location, String description, String[] photoIds, String[] questionIds) {
+    public HouseDAO(String id, String name, String location, String description, String[] photoIds, String ownerId) {
         this.id = id;
         this.name = name;
         this.location = location;
         this.description = description;
         this.photoIds = photoIds;
-        this.questionIds = questionIds;
+        this.ownerId = ownerId;
     }
 
     public String get_rid() {
@@ -67,20 +66,18 @@ public class HouseDAO {
     public String[] getPhotoIds() {
         return photoIds == null ? new String[0] : photoIds;
     }
-
     public void setPhotoIds(String[] photoIds) {
         this.photoIds = photoIds;
     }
-
-    public String[] getQuestionIds() {
-        return questionIds == null ? new String[0] : questionIds;
+    public String getOwnerId() {
+        return ownerId;
+    }
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
     }
 
-    public void setQuestionIds(String[] questionIds) {
-        this.questionIds = questionIds;
-    }
     public House toHouse(){
-        return new House(id, name, location, description, photoIds, questionIds);
+        return new House(id, name, location, description, photoIds, ownerId);
     }
     @Override
     public String toString() {
@@ -90,7 +87,7 @@ public class HouseDAO {
                 ", location='" + location + '\'' +
                 ", description='" + description + '\'' +
                 ", photoIds='" + Arrays.toString(photoIds) + '\'' +
-                ", questionIds='" + Arrays.toString(questionIds) +
+                ", ownerId='" + ownerId + '\'' +
                 '}';
     }
 }

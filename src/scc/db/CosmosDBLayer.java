@@ -58,10 +58,10 @@ public class CosmosDBLayer {
 			return;
 		db = client.getDatabase(DB_NAME);
 		users = db.getContainer("users");
-		//houses = db.getContainer("houses");
-		//rentals = db.getContainer("rentals");
-		//periods = db.getContainer("periods");
-		//questions = db.getContainer("questions");
+		houses = db.getContainer("houses");
+		rentals = db.getContainer("rentals");
+		periods = db.getContainer("periods");
+		questions = db.getContainer("questions");
 		
 	}
 

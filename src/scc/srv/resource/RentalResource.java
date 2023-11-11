@@ -51,7 +51,7 @@ public class RentalResource {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return Response.serverError().build();
     }
 
 
@@ -80,7 +80,7 @@ public class RentalResource {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return Response.serverError().build();
     }
 
     @GET
@@ -111,7 +111,7 @@ public class RentalResource {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return Response.serverError().build();
     }
 
 }
