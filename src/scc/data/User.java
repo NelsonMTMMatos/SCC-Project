@@ -1,7 +1,5 @@
 package scc.data;
 
-import java.util.Arrays;
-
 /**
  * Represents a User, as returned to the clients
  * 
@@ -13,20 +11,19 @@ public class User {
 	private String name;
 	private String pwd;
 	private String photoId;
-	private String[] houseIds;
-	public User(String id, String name, String pwd, String photoId, String[] houseIds) {
+
+	public User(){}
+
+	public User(String id, String name, String pwd, String photoId) {
 		super();
 		this.id = id;
 		this.name = name;
 		this.pwd = pwd;
 		this.photoId = photoId;
-		this.houseIds = houseIds;
 	}
 
-	public User(){}
-
 	public User(UserDAO user) {
-		this(user.getId(), user.getName(), user.getPwd(), user.getPhotoId(), user.getHouseIds());
+		this(user.getId(), user.getName(), user.getPwd(), user.getPhotoId());
 	}
 	public String getId() {
 		return id;
@@ -52,16 +49,9 @@ public class User {
 	public void setPhotoId(String photoId) {
 		this.photoId = photoId;
 	}
-	public String[] getHouseIds() {
-		return houseIds == null ? new String[0] : houseIds ;
-	}
-	public void setHouseIds(String[] houseIds) {
-		this.houseIds = houseIds;
-	}
 	@Override
 	public String toString() {
-		return "User [id=" + id + ", name=" + name + ", pwd=" + pwd + ", photoId=" + photoId + ", houseIds="
-				+ Arrays.toString(houseIds) + "]";
+		return "User [id=" + id + ", name=" + name + ", pwd=" + pwd + ", photoId=" + photoId + "]";
 	}
 
 }

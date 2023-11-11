@@ -48,7 +48,7 @@ public class RedisCache {
 
 			if(res == null) throw new CacheException("No entry found.");
 
-			return  new ObjectMapper().readValue(res, Session.class);
+			return new ObjectMapper().readValue(res, Session.class);
 		} catch (JsonProcessingException e) {
 			throw new RuntimeException(e);
 		}
