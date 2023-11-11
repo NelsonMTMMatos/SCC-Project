@@ -1,5 +1,7 @@
 package scc.data;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
@@ -7,20 +9,19 @@ import java.util.List;
 public class Period {
 
     private String id;
-
     private String houseId;
-
     private double normalPrice;
-
     private double discountedPrice;
-    private LocalDate startDate;
-    private LocalDate endDate;
 
-    private String[] rentalIds;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate startDate;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate endDate;
 
     public Period(){}
 
-    public Period(String id, String houseId, double normalPrice, double discountedPrice, LocalDate startDate, LocalDate endDate, String[] rentalIds) {
+    public Period(String id, String houseId, double normalPrice, double discountedPrice, LocalDate startDate, LocalDate endDate) {
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("Start date should be before or equal to end date.");
         }
@@ -30,7 +31,6 @@ public class Period {
         this.discountedPrice = discountedPrice;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.rentalIds = rentalIds;
     }
 
     public String getId() {
@@ -81,14 +81,6 @@ public class Period {
         this.endDate = endDate;
     }
 
-    public String[] getRentalIds() {
-        return rentalIds;
-    }
-
-    public void setRentalIds(String[] rentalIds) {
-        this.rentalIds = rentalIds;
-    }
-
     public boolean intersects(Period other) {
         return !this.startDate.isAfter(other.endDate) && !other.startDate.isAfter(this.endDate);
     }
@@ -102,7 +94,6 @@ public class Period {
                 ", discountedPrice=" + discountedPrice +
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
-                ", rentals=" + Arrays.toString(rentalIds) +
                 '}';
     }
 }

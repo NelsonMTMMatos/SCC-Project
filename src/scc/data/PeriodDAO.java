@@ -1,5 +1,7 @@
 package scc.data;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.LocalDate;
 import java.util.Arrays;
 
@@ -16,19 +18,21 @@ public class PeriodDAO {
     private double normalPrice;
 
     private double discountedPrice;
-    private LocalDate startDate;
-    private LocalDate endDate;
 
-    private String[] rentalIds;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate startDate;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate endDate;
 
     public PeriodDAO(){
     }
 
     public PeriodDAO(Period p, String id){
-        this(p.getId(), p.getHouseId(), p.getNormalPrice(), p.getDiscountedPrice(), p.getStartDate(), p.getEndDate(), p.getRentalIds());
+        this(p.getId(), p.getHouseId(), p.getNormalPrice(), p.getDiscountedPrice(), p.getStartDate(), p.getEndDate());
     }
 
-    public PeriodDAO(String id, String houseId, double normalPrice, double discountedPrice, LocalDate startDate, LocalDate endDate, String[] rentalIds) {
+    public PeriodDAO(String id, String houseId, double normalPrice, double discountedPrice, LocalDate startDate, LocalDate endDate) {
         super();
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("Start date should be before or equal to end date.");
@@ -39,7 +43,6 @@ public class PeriodDAO {
         this.discountedPrice = discountedPrice;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.rentalIds = rentalIds;
     }
 
     public String get_rid() {
@@ -103,20 +106,12 @@ public class PeriodDAO {
         this.endDate = endDate;
     }
 
-    public String[] getRentalIds() {
-        return rentalIds;
-    }
-
-    public void setRentalIds(String[] rentalIds) {
-        this.rentalIds = rentalIds;
-    }
-
     public boolean intersects(PeriodDAO other) {
         return !this.startDate.isAfter(other.endDate) && !other.startDate.isAfter(this.endDate);
     }
 
     public Period toPeriod(){
-        return new Period(id, houseId, normalPrice, discountedPrice, startDate, endDate, rentalIds == null ? null : Arrays.copyOf(rentalIds,rentalIds.length));
+        return new Period(id, houseId, normalPrice, discountedPrice, startDate, endDate);
     }
 
     @Override
@@ -128,7 +123,6 @@ public class PeriodDAO {
                 ", discountedPrice=" + discountedPrice +
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
-                ", rentals=" + Arrays.toString(rentalIds) +
                 '}';
     }
 }

@@ -1,94 +1,117 @@
 package scc.srv.resource;
 
-import com.azure.cosmos.util.CosmosPagedIterable;
+import com.azure.cosmos.CosmosException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import redis.clients.jedis.Jedis;
+import scc.cache.RedisCache;
 import scc.data.Rental;
 import scc.data.RentalDAO;
 import scc.db.CosmosDBLayer;
+import scc.utils.Helpers;
 
-
-import java.util.HashMap;
-import java.util.Iterator;
-
-@Path("/house/{id}/rental")
-//@Path("/house/" + id + "/rental")
+@Path("/houses/{houseId}/rental")
 public class RentalResource {
 
-    private HashMap<String, Rental> rentals;
-
-    @PathParam("id")
-    private String id;
+    private final String HOUSE_ID = "houseId";
+    private final String RENTAL_ID = "rentalId";
+    private final String RENTAL_CACHE_ENTRY_FORMAT = "rental:%s";
+    private final CosmosDBLayer db;
 
     public RentalResource() {
-
+        db = CosmosDBLayer.getInstance();
     }
 
     @POST
     @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String createRental(Rental rental) {
-        try {
+    public Response createRental(@PathParam(HOUSE_ID) String houseId, Rental rental) {
+        try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-            CosmosDBLayer db = CosmosDBLayer.getInstance();
-            CosmosPagedIterable<RentalDAO> resGet = db.getRentalById(rental.getId());
-            RentalDAO r = getRental(resGet);
-            if (r != null) {
-                throw new Exception("Rental already exists.");
+            HouseResource.checkIfHouseExists(houseId, jedis, db);
+
+            RentalDAO rDAO = new RentalDAO(rental);
+            db.createRental(rDAO);
+
+            String rentalId = rental.getId();
+            String rentalIdInCache = String.format(RENTAL_CACHE_ENTRY_FORMAT, rentalId);
+
+            ObjectMapper mapper = new ObjectMapper();
+            jedis.set(rentalIdInCache, mapper.writeValueAsString(rDAO));
+
+            return Response.ok(rentalId).build();
+
+        } catch (CosmosException e) {
+            if (e.getStatusCode() == 409) {
+                return Response.status(Response.Status.CONFLICT).build();
             }
-            db.createRental(new RentalDAO(rental));
-            return rental.getId();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return Response.serverError().build();
     }
 
+
+
     @PUT
-    @Path("/{id}")
+    @Path("/{" + RENTAL_ID + "}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String updateRental(@PathParam("id") String id, Rental rental) {
-        try {
+    public Response updateRental(@PathParam(HOUSE_ID) String houseId, @PathParam(RENTAL_ID) String rentalId, Rental rental) {
+        try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-            CosmosDBLayer db = CosmosDBLayer.getInstance();
-            CosmosPagedIterable<RentalDAO> resGet = db.getRentalById(id);
-            RentalDAO r = getRental(resGet);
-            if (r == null) {
-                throw new Exception("Rental doesn't exist.");
+            HouseResource.checkIfHouseExists(houseId, jedis, db);
+
+            RentalDAO rDAO = new RentalDAO(rental);
+            db.updateRental(rDAO);
+
+            String rentalIdInCache = String.format(RENTAL_CACHE_ENTRY_FORMAT, rentalId);
+            jedis.set(rentalIdInCache, Helpers.serialize(rDAO));
+
+            return Response.ok(rDAO.toRental()).build();
+
+        } catch (CosmosException e) {
+            if (e.getStatusCode() == 404) {
+                return Response.status(Response.Status.NOT_FOUND).build();
             }
-            db.updateRental(new RentalDAO(rental));
-            return id;
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return Response.serverError().build();
     }
 
     @GET
-    @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{" + RENTAL_ID + "}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String getRentalInfo(@PathParam("id") String id) {
-        try {
-            CosmosDBLayer db = CosmosDBLayer.getInstance();
-            CosmosPagedIterable<RentalDAO> resGet = db.getRentalById(id);
-            RentalDAO r = getRental(resGet);
-            return r.toString();
+    public Response getRental(@PathParam(HOUSE_ID) String houseId, @PathParam(RENTAL_ID) String rentalId) {
+        try(Jedis jedis = RedisCache.getCachePool().getResource()) {
+
+            HouseResource.checkIfHouseExists(houseId, jedis, db);
+
+            String rentalIdInCache = String.format(RENTAL_CACHE_ENTRY_FORMAT, rentalId);
+            ObjectMapper mapper = new ObjectMapper();
+            RentalDAO rDAO;
+
+            String res = jedis.get(rentalIdInCache);
+            if (res != null)
+                rDAO = mapper.readValue(res, RentalDAO.class);
+            else
+                rDAO = db.getRentalById(rentalId).getItem();
+
+            jedis.set(rentalIdInCache, mapper.writeValueAsString(rDAO));
+            return Response.ok(rDAO.toRental()).build();
+
+        } catch (CosmosException e) {
+            if (e.getStatusCode() == 404) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return Response.serverError().build();
     }
-
-    private RentalDAO getRental(CosmosPagedIterable<RentalDAO> resGet ){
-        Iterator<RentalDAO> it = resGet.stream().iterator();
-        return it.hasNext() ? it.next() : null;
-    }
-
-
 
 }

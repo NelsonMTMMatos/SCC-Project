@@ -9,18 +9,17 @@ public class House {
     private String location;
     private String description;
     private String[] photoIds;
-
-    private String[] questionIds;
+    private String ownerId;
 
     public House() {}
 
-    public House(String id, String name, String location, String description, String[] photoIds, String[] questionIds) {
+    public House(String id, String name, String location, String description, String[] photoIds, String ownerId) {
         this.id = id;
         this.name = name;
         this.location = location;
         this.description = description;
         this.photoIds = photoIds;
-        this.questionIds = questionIds;
+        this.ownerId = ownerId;
     }
 
     public String getId() {
@@ -64,12 +63,12 @@ public class House {
         this.photoIds = photoIds;
     }
 
-    public String[] getQuestionIds() {
-        return questionIds == null ? new String[0] : questionIds;
+    public String getOwnerId() {
+        return ownerId;
     }
 
-    public void setQuestionIds(String[] questionIds) {
-        this.questionIds = questionIds;
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
     }
 
     @Override
@@ -80,7 +79,7 @@ public class House {
                 ", location='" + location + '\'' +
                 ", description='" + description + '\'' +
                 ", photoIds='" + Arrays.toString(photoIds) + '\'' +
-                ", questionIds='" + Arrays.toString(questionIds) +
+                ", ownerId='" + ownerId + '\'' +
                 '}';
     }
 
