@@ -10,12 +10,12 @@ import scc.cache.RedisCache;
 import scc.data.Rental;
 import scc.data.RentalDAO;
 import scc.db.CosmosDBLayer;
-import scc.utils.Helpers;
+
+import static scc.srv.resource.HouseResource.HOUSE_ID;
+import static scc.srv.resource.HouseResource.existentHouse;
 
 @Path("/houses/{houseId}/rentals")
 public class RentalResource {
-
-    private final String HOUSE_ID = "houseId";
     private final String RENTAL_ID = "rentalId";
     private final String RENTAL_CACHE_ENTRY_FORMAT = "rental:%s";
     private final CosmosDBLayer db;
@@ -31,7 +31,7 @@ public class RentalResource {
     public Response createRental(@PathParam(HOUSE_ID) String houseId, Rental rental) {
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-            HouseResource.existentHouse(jedis, houseId, db);
+            existentHouse(jedis, houseId, db);
 
             RentalDAO rDAO = new RentalDAO(rental);
             db.createRental(rDAO);
@@ -61,7 +61,7 @@ public class RentalResource {
     public Response updateRental(@PathParam(HOUSE_ID) String houseId, @PathParam(RENTAL_ID) String rentalId, Rental rental) {
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-            HouseResource.existentHouse(jedis, houseId, db);
+            existentHouse(jedis, houseId, db);
 
             RentalDAO rDAO = new RentalDAO(rental);
             db.updateRental(rDAO);
@@ -87,7 +87,7 @@ public class RentalResource {
     public Response getRental(@PathParam(HOUSE_ID) String houseId, @PathParam(RENTAL_ID) String rentalId) {
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-            HouseResource.existentHouse(jedis, houseId, db);
+            existentHouse(jedis, houseId, db);
 
             String rentalIdInCache = String.format(RENTAL_CACHE_ENTRY_FORMAT, rentalId);
             ObjectMapper mapper = new ObjectMapper();

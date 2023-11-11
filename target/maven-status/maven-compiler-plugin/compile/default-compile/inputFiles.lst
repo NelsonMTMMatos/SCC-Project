@@ -3,6 +3,7 @@ C:\Users\rasvi\Desktop\MIEI\Mestrado\4ºANO\1ºSEMESTRE\DISCIPLINAS\SCC\PROJETO1\c
 C:\Users\rasvi\Desktop\MIEI\Mestrado\4ºANO\1ºSEMESTRE\DISCIPLINAS\SCC\PROJETO1\code\SCC-Phase1\src\scc\srv\resource\UserResource.java
 C:\Users\rasvi\Desktop\MIEI\Mestrado\4ºANO\1ºSEMESTRE\DISCIPLINAS\SCC\PROJETO1\code\SCC-Phase1\src\scc\serverless\CosmosDBFunction.java
 C:\Users\rasvi\Desktop\MIEI\Mestrado\4ºANO\1ºSEMESTRE\DISCIPLINAS\SCC\PROJETO1\code\SCC-Phase1\src\scc\utils\Hash.java
+C:\Users\rasvi\Desktop\MIEI\Mestrado\4ºANO\1ºSEMESTRE\DISCIPLINAS\SCC\PROJETO1\code\SCC-Phase1\src\scc\srv\resource\PeriodResource.java
 C:\Users\rasvi\Desktop\MIEI\Mestrado\4ºANO\1ºSEMESTRE\DISCIPLINAS\SCC\PROJETO1\code\SCC-Phase1\src\scc\data\Period.java
 C:\Users\rasvi\Desktop\MIEI\Mestrado\4ºANO\1ºSEMESTRE\DISCIPLINAS\SCC\PROJETO1\code\SCC-Phase1\src\scc\authentication\Login.java
 C:\Users\rasvi\Desktop\MIEI\Mestrado\4ºANO\1ºSEMESTRE\DISCIPLINAS\SCC\PROJETO1\code\SCC-Phase1\src\scc\cache\RedisCache.java
@@ -23,6 +24,7 @@ C:\Users\rasvi\Desktop\MIEI\Mestrado\4ºANO\1ºSEMESTRE\DISCIPLINAS\SCC\PROJETO1\c
 C:\Users\rasvi\Desktop\MIEI\Mestrado\4ºANO\1ºSEMESTRE\DISCIPLINAS\SCC\PROJETO1\code\SCC-Phase1\src\scc\cache\CacheException.java
 C:\Users\rasvi\Desktop\MIEI\Mestrado\4ºANO\1ºSEMESTRE\DISCIPLINAS\SCC\PROJETO1\code\SCC-Phase1\src\scc\data\Question.java
 C:\Users\rasvi\Desktop\MIEI\Mestrado\4ºANO\1ºSEMESTRE\DISCIPLINAS\SCC\PROJETO1\code\SCC-Phase1\src\scc\data\QuestionDAO.java
+C:\Users\rasvi\Desktop\MIEI\Mestrado\4ºANO\1ºSEMESTRE\DISCIPLINAS\SCC\PROJETO1\code\SCC-Phase1\src\scc\srv\resource\QuestionResource.java
 C:\Users\rasvi\Desktop\MIEI\Mestrado\4ºANO\1ºSEMESTRE\DISCIPLINAS\SCC\PROJETO1\code\SCC-Phase1\src\scc\utils\Helpers.java
 C:\Users\rasvi\Desktop\MIEI\Mestrado\4ºANO\1ºSEMESTRE\DISCIPLINAS\SCC\PROJETO1\code\SCC-Phase1\src\scc\authentication\Session.java
 C:\Users\rasvi\Desktop\MIEI\Mestrado\4ºANO\1ºSEMESTRE\DISCIPLINAS\SCC\PROJETO1\code\SCC-Phase1\src\scc\serverless\BlobStoreFunction.java

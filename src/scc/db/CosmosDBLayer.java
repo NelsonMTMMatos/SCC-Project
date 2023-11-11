@@ -194,7 +194,7 @@ public class CosmosDBLayer {
 
 	public CosmosPagedIterable<QuestionDAO> getHouseQuestions(String houseId){
 		init();
-		String questionsQuery = String.format("SELECT * FROM questions WHERE questions.houseId = %s", houseId);
+		String questionsQuery = String.format("SELECT * FROM questions WHERE questions.houseId = '%s'", houseId);
 		return questions.queryItems(questionsQuery, new CosmosQueryRequestOptions(), QuestionDAO.class);
 	}
 
