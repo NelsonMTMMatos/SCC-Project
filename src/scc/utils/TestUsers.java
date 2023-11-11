@@ -34,16 +34,13 @@ public class TestUsers
 			System.out.println( res.getItem());
 
 			System.out.println( "Get for id = " + id);
-			CosmosPagedIterable<UserDAO> resGet = db.getUserById(id);
-			for( UserDAO e: resGet) {
-				System.out.println( e);
-			}
+			System.out.println( db.getUserById(id) );
+
 
 			System.out.println( "Get for all ids");
-			resGet = db.getUsers();
-			for( UserDAO e: resGet) {
+			for( UserDAO e: db.getUsers())
 				System.out.println( e);
-			}
+
 
 			// Now, let's create and delete
 			id = "0:" + System.currentTimeMillis();
@@ -61,19 +58,14 @@ public class TestUsers
 			System.out.println( "Get for id = " + id);
 
 			System.out.println( "Get by id result");
-			resGet = db.getUserById(id);
-			for( UserDAO e: resGet) {
-				System.out.println( e);
-			}
-			
+
+			System.out.println( db.getUserById(id) );
+
 			System.out.println( "Delte user");
 			db.delUserById(id);
 
 			System.out.println( "Get by id result");
-			resGet = db.getUserById(id);
-			for( UserDAO e: resGet) {
-				System.out.println( e);
-			}
+			System.out.println( db.getUserById(id) );
 
 			db.close();
 		} catch (Exception e) {

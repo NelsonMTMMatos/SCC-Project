@@ -1,5 +1,7 @@
 package scc.srv.resource;
 
+import com.azure.cosmos.CosmosException;
+import com.azure.cosmos.models.CosmosItemResponse;
 import com.azure.cosmos.util.CosmosPagedIterable;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,7 +43,7 @@ public class UserResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response auth(Login user) {
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
-            UserDAO userDAO = checkIfUserExist(jedis, user.getUsername());
+            UserDAO userDAO = existentUser(jedis, user.getUsername());
 
             boolean pwdOK = BCrypt.checkpw(user.getPassword(), userDAO.getPwd());
 
@@ -75,23 +77,21 @@ public class UserResource {
 
             if(res != null) return Response.status(Status.CONFLICT).build();
 
-            CosmosPagedIterable<UserDAO> resGet = db.getUserById(user.getId());
-            UserDAO uDao = Helpers.getItem(resGet);
-
-            if(uDao != null) return Response.status(Status.CONFLICT).build();
-
             UserDAO newUser = new UserDAO(user);
 
             db.createUser(newUser);
-            jedis.set(userIdInCache, Helpers.serialize(newUser));
+
+            jedis.set(userIdInCache, new ObjectMapper().writeValueAsString(newUser));
 
             return Response.ok(newUser.getId()).build();
-
+        } catch (CosmosException e) {
+            if (e.getStatusCode() == 409)
+                return Response.status(Response.Status.CONFLICT).build();
         }catch (Exception e){
             e.printStackTrace();
         }
 
-        return null;
+        return Response.serverError().build();
     }
 
     @DELETE
@@ -99,19 +99,18 @@ public class UserResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteUser(@PathParam(ID) String id){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
-            UserDAO uDao = (UserDAO) db.delUserById(id).getItem();
-
-            if(uDao == null)
-                return Response.status(Status.NOT_FOUND).build();
-
+            db.delUserById(id).getItem();
             jedis.del(String.format(USER_CACHE_ENTRY_FORMAT, id));
 
-            return Response.ok(uDao.toUser()).build();
+            return Response.ok().build();
+        } catch (CosmosException e){
+            if (e.getStatusCode() == 404)
+                return Response.status(Response.Status.NOT_FOUND).build();
         }catch (Exception e){
             e.printStackTrace();
         }
 
-        return null;
+        return Response.serverError().build();
     }
 
     @PUT
@@ -130,14 +129,12 @@ public class UserResource {
                 return Response.status(Status.FORBIDDEN).build();
 
             UserDAO uDao = db.updateUser(new UserDAO(user)).getItem();
+            jedis.set(String.format(USER_CACHE_ENTRY_FORMAT, id), new ObjectMapper().writeValueAsString(uDao));
 
-            if(uDao == null)
-                return Response.status(Status.NOT_FOUND).build();
-
-            jedis.set(String.format(USER_CACHE_ENTRY_FORMAT, id), Helpers.serialize(uDao));
             return Response.ok(user).build();
-
-
+        } catch (CosmosException e) {
+            if (e.getStatusCode() == 404)
+                return Response.status(Response.Status.NOT_FOUND).build();
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -150,18 +147,19 @@ public class UserResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUserById(@PathParam(ID) String id){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
-            UserDAO uDao = checkIfUserExist(jedis, id);
+            UserDAO uDao = existentUser(jedis, id);
 
             if(uDao == null)
                 return Response.status(Status.NOT_FOUND).build();
 
-            jedis.set(String.format(USER_CACHE_ENTRY_FORMAT, id), Helpers.serialize(uDao));
+            jedis.set(String.format(USER_CACHE_ENTRY_FORMAT, id), new ObjectMapper().writeValueAsString(uDao));
 
             return Response.ok(uDao.toUser()).build();
         }catch (Exception e){
             e.printStackTrace();
         }
-        return null;
+
+        return Response.serverError().build();
     }
 
     @GET
@@ -176,42 +174,34 @@ public class UserResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response getHouses(@PathParam(ID) String id){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
-            UserDAO uDao = checkIfUserExist(jedis, id);
+            UserDAO uDao = existentUser(jedis, id);
 
             if(uDao == null)
                 return Response.status(Status.NOT_FOUND).build();
 
             String housesInCache = String.format(OWNER_CACHE_ENTRY_FORMAT, id);
             String res = jedis.get(housesInCache);
+            ObjectMapper mapper = new ObjectMapper();
 
             if(res != null)
-                return Response.ok(new ObjectMapper().readValue(res, List.class).toString()).build();
+                return Response.ok(mapper.readValue(res, List.class).toString()).build();
 
-            CosmosPagedIterable<HouseDAO> houses = db.getHousesOfUser(id);
+            List<HouseDAO> houses = db.getHousesOfUser(id).stream().collect(Collectors.toList());
 
-            jedis.set(housesInCache, Helpers.serialize(houses.stream().collect(Collectors.toList())));
+            jedis.set(housesInCache, mapper.writeValueAsString(houses));
 
-            return Response.ok(db.getHousesOfUser(id).toString()).build();
+            return Response.ok(houses).build();
         }catch (Exception e){
             e.printStackTrace();
         }
 
-        return null;
+        return Response.serverError().build();
     }
 
-    private UserDAO checkIfUserExist(Jedis jedis, String id) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
+    private UserDAO existentUser(Jedis jedis, String id) throws JsonProcessingException {
         String userIdInCache = String.format(USER_CACHE_ENTRY_FORMAT, id);
         String res = jedis.get(userIdInCache);
-        UserDAO uDao;
 
-        if(res != null)
-            uDao = mapper.readValue(res, UserDAO.class);
-        else{
-            CosmosPagedIterable<UserDAO> resGet = db.getUserById(id);
-            uDao = Helpers.getItem(resGet);
-        }
-
-        return uDao;
+        return res != null ? new ObjectMapper().readValue(res, UserDAO.class) : db.getUserById(id).getItem();
     }
 }

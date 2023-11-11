@@ -15,18 +15,10 @@ public class Helpers {
 
     private Helpers(){}
 
-    public static <T> T getItem(CosmosPagedIterable<T> resGet){
-        Iterator<T> it = resGet.stream().iterator();
-        return it.hasNext() ? it.next() : null;
-    }
-
     public static String encrypt(String password){
         return BCrypt.hashpw(password, BCrypt.gensalt());
     }
 
-    public static <T> String serialize(T obj) throws JsonProcessingException {
-        return new ObjectMapper().writeValueAsString(obj);
-    }
     public static Session checkCookieUser(Cookie session, String id) {
         if (session == null || session.getValue() == null)
             return null;

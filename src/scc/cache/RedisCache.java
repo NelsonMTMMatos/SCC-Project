@@ -35,7 +35,7 @@ public class RedisCache {
 
 	public static void putSession(Session session){
 		try(Jedis jedis = instance.getResource()){
-			jedis.set(String.format(SESSION_CACHE_ENTRY_FORMAT, session.getId()), Helpers.serialize(session));
+			jedis.set(String.format(SESSION_CACHE_ENTRY_FORMAT, session.getId()), new ObjectMapper().writeValueAsString(session));
 		} catch (JsonProcessingException e) {
 			throw new RuntimeException(e);
 		}
