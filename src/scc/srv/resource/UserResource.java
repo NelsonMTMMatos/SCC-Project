@@ -4,15 +4,16 @@ import com.azure.cosmos.util.CosmosPagedIterable;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.mindrot.jbcrypt.BCrypt;
 import redis.clients.jedis.Jedis;
 import scc.authentication.Login;
 import scc.authentication.Session;
 import scc.cache.RedisCache;
-import scc.data.House;
 import scc.data.HouseDAO;
 import scc.data.User;
 import scc.data.UserDAO;
@@ -20,15 +21,16 @@ import scc.db.CosmosDBLayer;
 import scc.utils.Helpers;
 
 
+
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Path("/user")
+@Path("/users")
 public class UserResource {
 
     private final String ID = "id";
     private final String USER_CACHE_ENTRY_FORMAT = "user:%s";
-    private final String OWNER_CACHE_ENTRY_FORMAT = "user:%s:houses";
+    private final String OWNER_CACHE_ENTRY_FORMAT = "user:%s:houses:";
     private final CosmosDBLayer db;
     public UserResource(){
         db = CosmosDBLayer.getInstance();
@@ -38,24 +40,28 @@ public class UserResource {
     @Path("/auth")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response auth(Login user) {
-        //TODO: Check if user exist in cache or db
-        boolean pwdOk = false;
-        //Check if user has password.
-        //boolean pwdOK = BCrypt.checkpw(plainTextPassword, hashedPassword);
-        if (pwdOk) {
-            String uid = UUID.randomUUID().toString();
-            NewCookie cookie = new NewCookie.Builder("scc:session")
-                    .value(uid)
-                    .path("/")
-                    .comment("sessionid")
-                    .maxAge(3600)
-                    .secure(false)
-                    .httpOnly(true)
-                    .build();
-            RedisCache.putSession(new Session(uid, user.getUsername()));
-            return Response.ok().cookie(cookie).build();
-        } else
-            throw new NotAuthorizedException("Incorrect login");
+        try(Jedis jedis = RedisCache.getCachePool().getResource()) {
+            UserDAO userDAO = checkIfUserExist(jedis, user.getUsername());
+
+            boolean pwdOK = BCrypt.checkpw(user.getPassword(), userDAO.getPwd());
+
+            if (pwdOK) {
+                String uid = UUID.randomUUID().toString();
+                NewCookie cookie = new NewCookie.Builder("scc:session")
+                        .value(uid)
+                        .path("/")
+                        .comment("sessionid")
+                        .maxAge(3600)
+                        .secure(false)
+                        .httpOnly(true)
+                        .build();
+                RedisCache.putSession(new Session(uid, user.getUsername()));
+                return Response.ok().cookie(cookie).build();
+            } else
+                throw new NotAuthorizedException("Incorrect login");
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
@@ -67,7 +73,7 @@ public class UserResource {
             String userIdInCache = String.format(USER_CACHE_ENTRY_FORMAT, user.getId());
             String res = jedis.get(userIdInCache);
 
-            if(res != null) throw new Exception("User already exists.");
+            if(res != null) return Response.status(Status.CONFLICT).build();
 
             CosmosPagedIterable<UserDAO> resGet = db.getUserById(user.getId());
             UserDAO uDao = Helpers.getItem(resGet);
@@ -79,7 +85,8 @@ public class UserResource {
             db.createUser(newUser);
             jedis.set(userIdInCache, Helpers.serialize(newUser));
 
-            return Helpers.ok(newUser.getId());
+            return Response.ok(newUser.getId()).build();
+
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -99,7 +106,7 @@ public class UserResource {
 
             jedis.del(String.format(USER_CACHE_ENTRY_FORMAT, id));
 
-            return Helpers.ok(uDao.toUser());
+            return Response.ok(uDao.toUser()).build();
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -111,20 +118,31 @@ public class UserResource {
     @Path("/{"+ ID + "}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response updateUser(@PathParam(ID) String id, User user){
+    public Response updateUser(@CookieParam("scc:session") Cookie session, @PathParam(ID) String id, User user){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
+
+            Session s = Helpers.checkCookieUser(session, id);
+
+            if(s == null)
+                return Response.status(Status.UNAUTHORIZED).build();
+
+            if(!s.getUser().equals(user.getId()))
+                return Response.status(Status.FORBIDDEN).build();
+
             UserDAO uDao = db.updateUser(new UserDAO(user)).getItem();
 
             if(uDao == null)
                 return Response.status(Status.NOT_FOUND).build();
 
             jedis.set(String.format(USER_CACHE_ENTRY_FORMAT, id), Helpers.serialize(uDao));
-            return Helpers.ok(user);
+            return Response.ok(user).build();
+
+
         }catch (Exception e){
             e.printStackTrace();
         }
 
-        return null;
+        return Response.serverError().build();
     }
 
     @GET
@@ -139,7 +157,7 @@ public class UserResource {
 
             jedis.set(String.format(USER_CACHE_ENTRY_FORMAT, id), Helpers.serialize(uDao));
 
-            return Helpers.ok(uDao.toUser());
+            return Response.ok(uDao.toUser()).build();
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -149,7 +167,7 @@ public class UserResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllUsers(){
-        return Helpers.ok(db.getUsers());
+        return Response.ok(db.getUsers()).build();
     }
 
     @GET
@@ -163,29 +181,17 @@ public class UserResource {
             if(uDao == null)
                 return Response.status(Status.NOT_FOUND).build();
 
-            CosmosPagedIterable<HouseDAO> houses = db.getHousesOfUser(id);
             String housesInCache = String.format(OWNER_CACHE_ENTRY_FORMAT, id);
+            String res = jedis.get(housesInCache);
+
+            if(res != null)
+                return Response.ok(new ObjectMapper().readValue(res, List.class).toString()).build();
+
+            CosmosPagedIterable<HouseDAO> houses = db.getHousesOfUser(id);
 
             jedis.set(housesInCache, Helpers.serialize(houses.stream().collect(Collectors.toList())));
 
-            /*
-            Set<House> houses = new HashSet<>();
-            for(String hID: uDao.getHouseIds()) {
-                ObjectMapper mapper = new ObjectMapper();
-                String houseIdInCache = String.format(HouseResource.HOUSE_CACHE_ENTRY_FORMAT, hID);
-                String res = jedis.get(houseIdInCache);
-
-                House h = mapper.readValue(res, HouseDAO.class).toHouse();
-
-                if(h == null) {
-                    h = db.getHouseById(hID).stream().iterator().next().toHouse();
-                    jedis.set(houseIdInCache, Helpers.serialize(h));
-                }
-                houses.add(h);
-            }
-             */
-
-            return Helpers.ok(db.getHousesOfUser(id).toString());
+            return Response.ok(db.getHousesOfUser(id).toString()).build();
         }catch (Exception e){
             e.printStackTrace();
         }

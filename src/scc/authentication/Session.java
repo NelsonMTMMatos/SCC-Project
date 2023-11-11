@@ -4,6 +4,8 @@ public class Session  {
     private String uid;
     private String user;
 
+    public Session(){}
+
     public Session(String uid, String user) {
         this.uid = uid;
         this.user = user;

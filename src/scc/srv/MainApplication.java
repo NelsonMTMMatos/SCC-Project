@@ -15,7 +15,7 @@ public class MainApplication extends Application
 
 	public MainApplication() {
 		resources.add(ControlResource.class);
-		resources.add(UserResource.class);
+		singletons.add(new UserResource());
 		singletons.add( new MediaResource());
 	}
 
