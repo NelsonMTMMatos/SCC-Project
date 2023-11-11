@@ -8,6 +8,8 @@ public class Question {
     private String questionContent;
     private String replyContent;
 
+    public Question(){}
+
     public Question(String houseId, String userId, String questionContent){
         this.houseId = houseId;
         this.userId = userId;

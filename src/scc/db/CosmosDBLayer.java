@@ -20,9 +20,10 @@ import java.util.List;
 import java.util.Map;
 
 public class CosmosDBLayer {
-	private static final String CONNECTION_URL = "https://scc232460665.documents.azure.com:443/";
-	private static final String DB_KEY = "3OQYJPlyi5kfhenKoKWuL1iCmeVcIcYnZhIH2TtQhXBIRIqluDTOeX24lMr6TyvIhunvOjOBgk8sACDbissptQ==";
-	private static final String DB_NAME = "scc2324";
+	private static final String CONNECTION_URL = System.getenv("COSMOSDB_URL");
+	private static final String DB_KEY = System.getenv("COSMOSDB_KEY");
+	private static final String DB_NAME = System.getenv("COSMOSDB_DATABASE");
+
 	private static CosmosDBLayer instance;
 
 	public static synchronized CosmosDBLayer getInstance() {
@@ -57,10 +58,10 @@ public class CosmosDBLayer {
 			return;
 		db = client.getDatabase(DB_NAME);
 		users = db.getContainer("users");
-		houses = db.getContainer("houses");
-		rentals = db.getContainer("rentals");
-		periods = db.getContainer("periods");
-		questions = db.getContainer("questions");
+		//houses = db.getContainer("houses");
+		//rentals = db.getContainer("rentals");
+		//periods = db.getContainer("periods");
+		//questions = db.getContainer("questions");
 		
 	}
 
@@ -81,7 +82,7 @@ public class CosmosDBLayer {
 		return users.replaceItem(user, user.getId(), key, new CosmosItemRequestOptions());
 	}
 	
-	public CosmosPagedIterable<UserDAO> getUserById( String id) {
+	public CosmosPagedIterable<UserDAO> getUserById(String id) {
 		init();
 		return users.queryItems("SELECT * FROM users WHERE users.id=\"" + id + "\"", new CosmosQueryRequestOptions(), UserDAO.class);
 	}
@@ -89,6 +90,11 @@ public class CosmosDBLayer {
 	public CosmosPagedIterable<UserDAO> getUsers() {
 		init();
 		return users.queryItems("SELECT * FROM users ", new CosmosQueryRequestOptions(), UserDAO.class);
+	}
+
+	public CosmosPagedIterable<HouseDAO> getHousesOfUser(String id){
+		init();
+		return houses.queryItems("SELECT * FROM houses WHERE houses.ownerId= \"" + id + "\"", new CosmosQueryRequestOptions(), HouseDAO.class);
 	}
 
 

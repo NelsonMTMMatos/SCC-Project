@@ -11,6 +11,8 @@ public class Rental {
     private LocalDate endDate;
     private int price;
 
+    public Rental(){}
+
     public Rental(String id, String houseId, String userId, LocalDate startDate, LocalDate endDate, int price) {
         this.id = id;
         this.houseId = houseId;

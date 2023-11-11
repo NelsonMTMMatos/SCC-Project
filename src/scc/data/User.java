@@ -23,6 +23,8 @@ public class User {
 		this.houseIds = houseIds;
 	}
 
+	public User(){}
+
 	public User(UserDAO user) {
 		this(user.getId(), user.getName(), user.getPwd(), user.getPhotoId(), user.getHouseIds());
 	}

@@ -10,8 +10,8 @@ import scc.data.*;
 import scc.db.CosmosDBLayer;
 import scc.utils.Helpers;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import java.time.Period;
 import java.util.*;
 import java.util.logging.Logger;
