@@ -1,6 +1,7 @@
 package scc.srv.resource;
 
 import com.azure.cosmos.CosmosException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -12,10 +13,7 @@ import scc.data.HouseDAO;
 import scc.data.Question;
 import scc.data.QuestionDAO;
 import scc.db.CosmosDBLayer;
-import scc.utils.Helpers;
 
-import java.time.LocalDate;
-import java.time.Period;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -55,7 +53,7 @@ public class HouseResource {
             HouseDAO hDAO = new HouseDAO(house);
             db.createHouse(hDAO);
 
-            jedis.set(idInCache, Helpers.serialize(hDAO));
+            jedis.set(idInCache, new ObjectMapper().writeValueAsString(hDAO));
 
             return Response.ok(id).build();
         } catch (CosmosException e) {
@@ -76,9 +74,9 @@ public class HouseResource {
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
             jedis.del(String.format(HOUSE_CACHE_ENTRY_FORMAT, id));
-            HouseDAO hDAO = (HouseDAO) db.delHouseById(id).getItem();
+            db.delHouseById(id).getItem();
 
-            return Response.ok(hDAO.toHouse()).build();
+            return Response.ok().build();
         } catch (CosmosException e){
             if (e.getStatusCode() == 404) {
                 return Response.status(Response.Status.NOT_FOUND).build();
@@ -100,7 +98,7 @@ public class HouseResource {
             HouseDAO hDAO = db.updateHouse(new HouseDAO(house)).getItem();
 
             String idInCache = String.format(HOUSE_CACHE_ENTRY_FORMAT, id);
-            jedis.set(idInCache, Helpers.serialize(hDAO));
+            jedis.set(idInCache, new ObjectMapper().writeValueAsString(hDAO));
 
             return Response.ok(hDAO.toHouse()).build();
 
@@ -120,18 +118,11 @@ public class HouseResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getHouse(@PathParam(HOUSE_ID) String id){
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
+            HouseDAO hDAO = existentHouse(jedis, id, db);
 
             String idInCache = String.format(HOUSE_CACHE_ENTRY_FORMAT, id);
-            String res = jedis.get(idInCache);
-            HouseDAO hDAO;
-            ObjectMapper mapper = new ObjectMapper();
+            jedis.set(idInCache, new ObjectMapper().writeValueAsString(hDAO));
 
-            if (res != null)
-                hDAO = mapper.readValue(res, HouseDAO.class);
-            else
-                hDAO = db.getHouseById(id).getItem();
-
-            jedis.set(idInCache, mapper.writeValueAsString(hDAO));
             return Response.ok(hDAO.toHouse()).build();
 
         } catch (CosmosException e) {
@@ -153,14 +144,14 @@ public class HouseResource {
     public Response createQuestion(@PathParam(HOUSE_ID) String houseId, Question question){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
 
-            checkIfHouseExists(houseId, jedis, db);
+            existentHouse(jedis, houseId, db);
 
             QuestionDAO newQuestion = new QuestionDAO(question);
 
             db.createQuestion(newQuestion);
 
             String questionIdInCache = String.format(QUESTION_CACHE_ENTRY_FORMAT, question.getHouseId());
-            jedis.set(questionIdInCache, Helpers.serialize(newQuestion));
+            jedis.set(questionIdInCache, new ObjectMapper().writeValueAsString(newQuestion));
 
             return Response.ok(newQuestion.getId()).build();
         } catch (CosmosException e) {
@@ -180,7 +171,7 @@ public class HouseResource {
     public Response replyToQuestion(@PathParam(HOUSE_ID) String houseId, @PathParam(QUESTION_ID) String questionId, String reply){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
 
-            checkIfHouseExists(houseId, jedis, db);
+            existentHouse(jedis, houseId, db);
 
             String questionIdInCache = String.format(QUESTION_CACHE_ENTRY_FORMAT, questionId);
             String qRes = jedis.get(questionIdInCache);
@@ -216,7 +207,7 @@ public class HouseResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response listQuestions(@PathParam(HOUSE_ID) String houseId){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
-            checkIfHouseExists(houseId, jedis, db);
+            existentHouse(jedis, houseId, db);
 
             //Check if query is in cache
 
@@ -248,14 +239,12 @@ public class HouseResource {
         return Response.status(Response.Status.NOT_IMPLEMENTED).build();
     }
 
+    protected static HouseDAO existentHouse(Jedis jedis, String id, CosmosDBLayer db) throws JsonProcessingException {
+        String houseIdInCache = String.format(HOUSE_CACHE_ENTRY_FORMAT, id);
+        String res = jedis.get(houseIdInCache);
 
-    protected static void checkIfHouseExists(String houseId, Jedis jedis, CosmosDBLayer db) {
-        String houseIdInCache = String.format(HOUSE_CACHE_ENTRY_FORMAT, houseId);
-        String hRes = jedis.get(houseIdInCache);
-
-        if (hRes == null)
-            db.getHouseById(houseId);
-
+        return res != null ? new ObjectMapper().readValue(res, HouseDAO.class) : db.getHouseById(id).getItem();
     }
+
 
 }

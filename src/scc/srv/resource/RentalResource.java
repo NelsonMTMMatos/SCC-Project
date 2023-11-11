@@ -12,7 +12,7 @@ import scc.data.RentalDAO;
 import scc.db.CosmosDBLayer;
 import scc.utils.Helpers;
 
-@Path("/houses/{houseId}/rental")
+@Path("/houses/{houseId}/rentals")
 public class RentalResource {
 
     private final String HOUSE_ID = "houseId";
@@ -31,7 +31,7 @@ public class RentalResource {
     public Response createRental(@PathParam(HOUSE_ID) String houseId, Rental rental) {
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-            HouseResource.checkIfHouseExists(houseId, jedis, db);
+            HouseResource.existentHouse(jedis, houseId, db);
 
             RentalDAO rDAO = new RentalDAO(rental);
             db.createRental(rDAO);
@@ -39,8 +39,7 @@ public class RentalResource {
             String rentalId = rental.getId();
             String rentalIdInCache = String.format(RENTAL_CACHE_ENTRY_FORMAT, rentalId);
 
-            ObjectMapper mapper = new ObjectMapper();
-            jedis.set(rentalIdInCache, mapper.writeValueAsString(rDAO));
+            jedis.set(rentalIdInCache, new ObjectMapper().writeValueAsString(rDAO));
 
             return Response.ok(rentalId).build();
 
@@ -55,7 +54,6 @@ public class RentalResource {
     }
 
 
-
     @PUT
     @Path("/{" + RENTAL_ID + "}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -63,13 +61,13 @@ public class RentalResource {
     public Response updateRental(@PathParam(HOUSE_ID) String houseId, @PathParam(RENTAL_ID) String rentalId, Rental rental) {
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-            HouseResource.checkIfHouseExists(houseId, jedis, db);
+            HouseResource.existentHouse(jedis, houseId, db);
 
             RentalDAO rDAO = new RentalDAO(rental);
             db.updateRental(rDAO);
 
             String rentalIdInCache = String.format(RENTAL_CACHE_ENTRY_FORMAT, rentalId);
-            jedis.set(rentalIdInCache, Helpers.serialize(rDAO));
+            jedis.set(rentalIdInCache, new ObjectMapper().writeValueAsString(rDAO));
 
             return Response.ok(rDAO.toRental()).build();
 
@@ -89,7 +87,7 @@ public class RentalResource {
     public Response getRental(@PathParam(HOUSE_ID) String houseId, @PathParam(RENTAL_ID) String rentalId) {
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-            HouseResource.checkIfHouseExists(houseId, jedis, db);
+            HouseResource.existentHouse(jedis, houseId, db);
 
             String rentalIdInCache = String.format(RENTAL_CACHE_ENTRY_FORMAT, rentalId);
             ObjectMapper mapper = new ObjectMapper();

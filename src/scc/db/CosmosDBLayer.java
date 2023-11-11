@@ -82,9 +82,10 @@ public class CosmosDBLayer {
 		return users.replaceItem(user, user.getId(), key, new CosmosItemRequestOptions());
 	}
 	
-	public CosmosPagedIterable<UserDAO> getUserById(String id) {
+	public CosmosItemResponse<UserDAO> getUserById(String id) {
 		init();
-		return users.queryItems("SELECT * FROM users WHERE users.id=\"" + id + "\"", new CosmosQueryRequestOptions(), UserDAO.class);
+		PartitionKey key = new PartitionKey(id);
+		return users.readItem(id, key, UserDAO.class);
 	}
 
 	public CosmosPagedIterable<UserDAO> getUsers() {
@@ -94,7 +95,8 @@ public class CosmosDBLayer {
 
 	public CosmosPagedIterable<HouseDAO> getHousesOfUser(String id){
 		init();
-		return houses.queryItems("SELECT * FROM houses WHERE houses.ownerId= \"" + id + "\"", new CosmosQueryRequestOptions(), HouseDAO.class);
+		String query = String.format("SELECT * FROM houses WHERE houses.ownerId='%s'", id);
+		return houses.queryItems(query, new CosmosQueryRequestOptions(), HouseDAO.class);
 	}
 
 
@@ -119,7 +121,6 @@ public class CosmosDBLayer {
 		init();
 		PartitionKey key = new PartitionKey(id);
 		return houses.readItem(id, key, HouseDAO.class);
-	//	return  houses.queryItems("SELECT * FROM houses WHERE houses.id=\"" + id + "\"", new CosmosQueryRequestOptions(), HouseDAO.class);
 	}
 
 	public CosmosPagedIterable<HouseDAO> getHouses(){
@@ -142,12 +143,11 @@ public class CosmosDBLayer {
 		init();
 		PartitionKey key = new PartitionKey(id);
 		return rentals.readItem(id, key, RentalDAO.class);
-	//	return rentals.queryItems("SELECT * FROM rentals WHERE rentals.id=\"" + id + "\"", new CosmosQueryRequestOptions(), RentalDAO.class);
 	}
 
 	public CosmosPagedIterable<HouseDAO> getHousesByLocation(String location){
 		init();
-		String query = String.format("SELECT * FROM houses WHERE houses.location=%s", location);
+		String query = String.format("SELECT * FROM houses WHERE houses.location='%s'", location);
 		return houses.queryItems(query, new CosmosQueryRequestOptions(), HouseDAO.class);
 	}
 
@@ -157,7 +157,8 @@ public class CosmosDBLayer {
 		String start_date = startDate.format(format);
 		String end_date = endDate.format(format);
 
-		String periodQuery = String.format("SELECT DISTINCT periods.house_id FROM periods WHERE NOT (periods.start_date <= %s AND periods.end_date >= %s)", start_date, end_date);
+		String periodQuery = String.format("SELECT DISTINCT periods.house_id FROM periods " +
+				"WHERE NOT (periods.start_date <= '%s' AND periods.end_date >= '%s')", start_date, end_date);
 
 		CosmosPagedIterable<String> houseIds= periods.queryItems(periodQuery, new CosmosQueryRequestOptions(), String.class);
 
@@ -201,7 +202,6 @@ public class CosmosDBLayer {
 		init();
 		PartitionKey key = new PartitionKey(id);
 		return questions.readItem(id, key, QuestionDAO.class);
-	//	return questions.queryItems("SELECT * FROM questions WHERE rentals.id=\"" + id + "\"", new CosmosQueryRequestOptions(), QuestionDAO.class);
 	}
 
 	public void close() {
