@@ -84,6 +84,7 @@ public class UserResource {
             jedis.set(userIdInCache, new ObjectMapper().writeValueAsString(newUser));
 
             return Response.ok(newUser.getId()).build();
+
         } catch (CosmosException e) {
             if (e.getStatusCode() == 409)
                 return Response.status(Response.Status.CONFLICT).build();
@@ -103,6 +104,7 @@ public class UserResource {
             jedis.del(String.format(USER_CACHE_ENTRY_FORMAT, id));
 
             return Response.ok().build();
+
         } catch (CosmosException e){
             if (e.getStatusCode() == 404)
                 return Response.status(Response.Status.NOT_FOUND).build();
@@ -132,6 +134,7 @@ public class UserResource {
             jedis.set(String.format(USER_CACHE_ENTRY_FORMAT, id), new ObjectMapper().writeValueAsString(uDao));
 
             return Response.ok(user).build();
+
         } catch (CosmosException e) {
             if (e.getStatusCode() == 404)
                 return Response.status(Response.Status.NOT_FOUND).build();
@@ -149,12 +152,14 @@ public class UserResource {
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
             UserDAO uDao = existentUser(jedis, id);
 
-            if(uDao == null)
-                return Response.status(Status.NOT_FOUND).build();
-
             jedis.set(String.format(USER_CACHE_ENTRY_FORMAT, id), new ObjectMapper().writeValueAsString(uDao));
 
             return Response.ok(uDao.toUser()).build();
+
+        } catch (CosmosException e){
+            if (e.getStatusCode() == 404) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -165,7 +170,10 @@ public class UserResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllUsers(){
-        return Response.ok(db.getUsers()).build();
+        return Response.ok(db.getUsers()
+                .stream()
+                .collect(Collectors.toList()))
+                .build();
     }
 
     @GET
@@ -174,23 +182,25 @@ public class UserResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response getHouses(@PathParam(ID) String id){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
-            UserDAO uDao = existentUser(jedis, id);
-
-            if(uDao == null)
-                return Response.status(Status.NOT_FOUND).build();
+            existentUser(jedis, id);
 
             String housesInCache = String.format(OWNER_CACHE_ENTRY_FORMAT, id);
             String res = jedis.get(housesInCache);
             ObjectMapper mapper = new ObjectMapper();
 
             if(res != null)
-                return Response.ok(mapper.readValue(res, List.class).toString()).build();
+                return Response.ok(mapper.readValue(res, List.class)).build();
 
             List<HouseDAO> houses = db.getHousesOfUser(id).stream().collect(Collectors.toList());
 
             jedis.set(housesInCache, mapper.writeValueAsString(houses));
 
             return Response.ok(houses).build();
+
+        } catch (CosmosException e){
+            if (e.getStatusCode() == 404) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
         }catch (Exception e){
             e.printStackTrace();
         }

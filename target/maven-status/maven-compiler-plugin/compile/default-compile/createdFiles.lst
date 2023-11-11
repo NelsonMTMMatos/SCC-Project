@@ -11,10 +11,12 @@ scc\data\PeriodDAO.class
 scc\srv\resource\RentalResource.class
 scc\data\Period.class
 scc\serverless\CosmosDBFunction.class
+scc\srv\resource\PeriodResource.class
 scc\db\CosmosDBLayer.class
 scc\srv\MainApplication.class
 scc\utils\Helpers.class
 scc\srv\resource\HouseResource.class
+scc\srv\resource\QuestionResource.class
 scc\srv\resource\MediaResource.class
 scc\data\Rental.class
 scc\utils\Hash.class
