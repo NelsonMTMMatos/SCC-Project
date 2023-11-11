@@ -1,5 +1,7 @@
 package scc.data;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.LocalDate;
 import java.util.Arrays;
 
@@ -16,7 +18,11 @@ public class PeriodDAO {
     private double normalPrice;
 
     private double discountedPrice;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate startDate;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate endDate;
 
     private String[] rentalIds;

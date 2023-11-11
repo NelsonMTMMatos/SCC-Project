@@ -9,10 +9,10 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<authors>60483-60665-60691</authors>
 		<java.version>11</java.version>
-		<functionAppName>scc23funwesteurope60483</functionAppName>
+		<functionAppName>scc24funwesteurope60665</functionAppName>
 		<functionAppRegion>westeurope</functionAppRegion>
 		<functionPricingTier>B1</functionPricingTier>
-		<functionResourceGroup>scc24-rg-westeurope-60483</functionResourceGroup>
+		<functionResourceGroup>scc24-rg-westeurope-60665</functionResourceGroup>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -164,8 +164,8 @@
 			                </resource>
 			            </resources>
 			        </deployment>
-			        <resourceGroup>scc24-rg-westeurope-60483</resourceGroup>
-			        <appName>scc24appwesteurope60483</appName>
+			        <resourceGroup>scc24-rg-westeurope-60665</resourceGroup>
+			        <appName>scc24appwesteurope60665</appName>
 			    </configuration>
 			</plugin>
 			<plugin>

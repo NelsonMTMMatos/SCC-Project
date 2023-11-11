@@ -1,5 +1,7 @@
 package scc.data;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.LocalDate;
 import java.time.Period;
 
@@ -7,13 +9,15 @@ public class Rental {
     private String id;
     private String houseId;
     private String userId;
-    private LocalDate startDate;
-    private LocalDate endDate;
+
+    private String startDate;
+
+    private String endDate;
     private int price;
 
     public Rental(){}
 
-    public Rental(String id, String houseId, String userId, LocalDate startDate, LocalDate endDate, int price) {
+    public Rental(String id, String houseId, String userId, String startDate, String endDate, int price) {
         this.id = id;
         this.houseId = houseId;
         this.userId = userId;
@@ -46,19 +50,19 @@ public class Rental {
         this.userId = userId;
     }
 
-    public LocalDate getStartDate() {
+    public String getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(LocalDate startDate) {
+    public void setStartDate(String startDate) {
         this.startDate = startDate;
     }
 
-    public LocalDate getEndDate() {
+    public String getEndDate() {
         return endDate;
     }
 
-    public void setEndDate(LocalDate endDate) {
+    public void setEndDate(String endDate) {
         this.endDate = endDate;
     }
 

@@ -4,9 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.ws.rs.core.Application;
-import scc.srv.resource.ControlResource;
-import scc.srv.resource.MediaResource;
-import scc.srv.resource.UserResource;
+import scc.srv.resource.*;
 
 public class MainApplication extends Application
 {
@@ -16,6 +14,9 @@ public class MainApplication extends Application
 	public MainApplication() {
 		resources.add(ControlResource.class);
 		resources.add(UserResource.class);
+		resources.add(HouseResource.class);
+		resources.add(RentalResource.class);
+
 		singletons.add( new MediaResource());
 	}
 

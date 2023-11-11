@@ -115,9 +115,11 @@ public class CosmosDBLayer {
 		return houses.replaceItem(house, house.getId(), key, new CosmosItemRequestOptions());
 	}
 
-	public CosmosPagedIterable<HouseDAO> getHouseById(String id){
+	public CosmosItemResponse<HouseDAO> getHouseById(String id){
 		init();
-		return  houses.queryItems("SELECT * FROM houses WHERE houses.id=\"" + id + "\"", new CosmosQueryRequestOptions(), HouseDAO.class);
+		PartitionKey key = new PartitionKey(id);
+		return houses.readItem(id, key, HouseDAO.class);
+	//	return  houses.queryItems("SELECT * FROM houses WHERE houses.id=\"" + id + "\"", new CosmosQueryRequestOptions(), HouseDAO.class);
 	}
 
 	public CosmosPagedIterable<HouseDAO> getHouses(){
@@ -136,9 +138,11 @@ public class CosmosDBLayer {
 		return rentals.replaceItem(rental, rental.getId(), key, new CosmosItemRequestOptions());
 	}
 
-	public CosmosPagedIterable<RentalDAO> getRentalById(String id){
+	public CosmosItemResponse<RentalDAO> getRentalById(String id){
 		init();
-		return rentals.queryItems("SELECT * FROM rentals WHERE rentals.id=\"" + id + "\"", new CosmosQueryRequestOptions(), RentalDAO.class);
+		PartitionKey key = new PartitionKey(id);
+		return rentals.readItem(id, key, RentalDAO.class);
+	//	return rentals.queryItems("SELECT * FROM rentals WHERE rentals.id=\"" + id + "\"", new CosmosQueryRequestOptions(), RentalDAO.class);
 	}
 
 	public CosmosPagedIterable<HouseDAO> getHousesByLocation(String location){
@@ -187,14 +191,17 @@ public class CosmosDBLayer {
 		return questions.replaceItem(question, question.getId(), key, new CosmosItemRequestOptions());
 	}
 
-	public CosmosPagedIterable<QuestionDAO> getQuestions(){
+	public CosmosPagedIterable<QuestionDAO> getHouseQuestions(String houseId){
 		init();
-		return questions.queryItems("SELECT * FROM questions", new CosmosQueryRequestOptions(), QuestionDAO.class);
+		String questionsQuery = String.format("SELECT * FROM questions WHERE questions.houseId = %s", houseId);
+		return questions.queryItems(questionsQuery, new CosmosQueryRequestOptions(), QuestionDAO.class);
 	}
 
-	public CosmosPagedIterable<QuestionDAO> getQuestionById(String id){
+	public CosmosItemResponse<QuestionDAO> getQuestionById(String id){
 		init();
-		return questions.queryItems("SELECT * FROM questions WHERE rentals.id=\"" + id + "\"", new CosmosQueryRequestOptions(), QuestionDAO.class);
+		PartitionKey key = new PartitionKey(id);
+		return questions.readItem(id, key, QuestionDAO.class);
+	//	return questions.queryItems("SELECT * FROM questions WHERE rentals.id=\"" + id + "\"", new CosmosQueryRequestOptions(), QuestionDAO.class);
 	}
 
 	public void close() {

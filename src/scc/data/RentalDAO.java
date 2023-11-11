@@ -1,5 +1,7 @@
 package scc.data;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.Arrays;
@@ -11,8 +13,10 @@ public class RentalDAO {
     private String id;
     private String houseId;
     private String userId;
-    private LocalDate startDate;
-    private LocalDate endDate;
+
+    private String startDate;
+
+    private String endDate;
     private int price;
 
     public RentalDAO() {}
@@ -21,7 +25,7 @@ public class RentalDAO {
         this(r.getId(), r.getHouseId(), r.getUserId(), r.getStartDate(), r.getEndDate(), r.getPrice());
     }
 
-    public RentalDAO(String id, String houseId, String userId, LocalDate startDate, LocalDate endDate, int price) {
+    public RentalDAO(String id, String houseId, String userId, String startDate, String endDate, int price) {
         super();
         this.id = id;
         this.houseId = houseId;
@@ -71,19 +75,19 @@ public class RentalDAO {
         this.userId = userId;
     }
 
-    public LocalDate getStartDate() {
+    public String getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(LocalDate startDate) {
+    public void setStartDate(String startDate) {
         this.startDate = startDate;
     }
 
-    public LocalDate getEndDate() {
+    public String getEndDate() {
         return endDate;
     }
 
-    public void setEndDate(LocalDate endDate) {
+    public void setEndDate(String endDate) {
         this.endDate = endDate;
     }
 
