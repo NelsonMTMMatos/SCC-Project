@@ -1,7 +1,5 @@
 package scc.data;
 
-import java.util.Arrays;
-
 /**
  * Represents a User, as returned to the clients
  * 
@@ -13,6 +11,9 @@ public class User {
 	private String name;
 	private String pwd;
 	private String photoId;
+
+	public User(){}
+
 	public User(String id, String name, String pwd, String photoId) {
 		super();
 		this.id = id;
@@ -20,8 +21,6 @@ public class User {
 		this.pwd = pwd;
 		this.photoId = photoId;
 	}
-
-	public User(){}
 
 	public User(UserDAO user) {
 		this(user.getId(), user.getName(), user.getPwd(), user.getPhotoId());

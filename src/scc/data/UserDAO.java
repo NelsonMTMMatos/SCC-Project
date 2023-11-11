@@ -1,6 +1,6 @@
 package scc.data;
 
-import java.util.Arrays;
+import scc.utils.Helpers;
 
 /**
  * Represents a User, as stored in the database
@@ -18,13 +18,15 @@ public class UserDAO {
 	public UserDAO( User u) {
 		this(u.getId(), u.getName(), u.getPwd(), u.getPhotoId());
 	}
+
 	public UserDAO(String id, String name, String pwd, String photoId) {
 		super();
 		this.id = id;
 		this.name = name;
-		this.pwd = pwd;
+		this.pwd = Helpers.encrypt(pwd);
 		this.photoId = photoId;
 	}
+
 	public String get_rid() {
 		return _rid;
 	}
@@ -67,7 +69,7 @@ public class UserDAO {
 	@Override
 	public String toString() {
 		return "UserDAO [_rid=" + _rid + ", _ts=" + _ts + ", id=" + id + ", name=" + name + ", pwd=" + pwd
-				+ ", photoId=" + photoId + ", houseIds=" + "]";
+				+ ", photoId=" + photoId + "]";
 	}
 
 }

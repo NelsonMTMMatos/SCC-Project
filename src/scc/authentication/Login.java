@@ -2,13 +2,16 @@ package scc.authentication;
 
 public class Login {
 
-    private final String username;
-    private final String password;
+    private String username;
+    private String password;
+
+    public Login(){}
 
     public Login(String username, String password){
         this.username = username;
         this.password = password;
     }
+
 
     public String getUsername(){
         return username;
@@ -16,5 +19,10 @@ public class Login {
 
     public String getPassword(){
         return password;
+    }
+
+    @Override
+    public String toString() {
+        return "Login [username=" + username + ", password=" + password + "]";
     }
 }

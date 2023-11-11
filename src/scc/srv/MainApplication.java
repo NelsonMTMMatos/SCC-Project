@@ -16,7 +16,7 @@ public class MainApplication extends Application
 		resources.add(UserResource.class);
 		resources.add(HouseResource.class);
 		resources.add(RentalResource.class);
-
+    
 		singletons.add( new MediaResource());
 	}
 
