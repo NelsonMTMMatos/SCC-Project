@@ -10,6 +10,7 @@ scc\cache\RedisCache.class
 scc\data\PeriodDAO.class
 scc\srv\resource\RentalResource.class
 scc\data\Period.class
+scc\serverless\CosmosDBFunction.class
 scc\db\CosmosDBLayer.class
 scc\srv\MainApplication.class
 scc\utils\Helpers.class
@@ -18,8 +19,11 @@ scc\srv\resource\MediaResource.class
 scc\data\Rental.class
 scc\utils\Hash.class
 scc\utils\TestCache.class
+scc\serverless\HttpFunction.class
+scc\serverless\BlobStoreFunction.class
 scc\data\QuestionDAO.class
 scc\data\UserDAO.class
+scc\serverless\TimerFunction.class
 scc\srv\resource\ControlResource.class
 scc\data\House.class
 scc\data\HouseDAO.class

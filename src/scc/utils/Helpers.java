@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.core.Cookie;
-import redis.clients.jedis.Jedis;
+import jakarta.ws.rs.core.Response;
 import scc.authentication.Session;
 import scc.cache.CacheException;
 import scc.cache.RedisCache;
@@ -19,6 +19,9 @@ public class Helpers {
     public static <T> T getItem(CosmosPagedIterable<T> resGet){
         Iterator<T> it = resGet.stream().iterator();
         return it.hasNext() ? it.next() : null;
+    }
+    public static <T> Response ok(T item){
+        return Response.status(Response.Status.OK).entity(item).build();
     }
 
     public static <T> String serialize(T obj) throws JsonProcessingException {

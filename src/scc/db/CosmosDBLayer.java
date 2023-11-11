@@ -82,7 +82,7 @@ public class CosmosDBLayer {
 		return users.replaceItem(user, user.getId(), key, new CosmosItemRequestOptions());
 	}
 	
-	public CosmosPagedIterable<UserDAO> getUserById( String id) {
+	public CosmosPagedIterable<UserDAO> getUserById(String id) {
 		init();
 		return users.queryItems("SELECT * FROM users WHERE users.id=\"" + id + "\"", new CosmosQueryRequestOptions(), UserDAO.class);
 	}
@@ -90,6 +90,11 @@ public class CosmosDBLayer {
 	public CosmosPagedIterable<UserDAO> getUsers() {
 		init();
 		return users.queryItems("SELECT * FROM users ", new CosmosQueryRequestOptions(), UserDAO.class);
+	}
+
+	public CosmosPagedIterable<HouseDAO> getHousesOfUser(String id){
+		init();
+		return houses.queryItems("SELECT * FROM houses WHERE houses.ownerId= \"" + id + "\"", new CosmosQueryRequestOptions(), HouseDAO.class);
 	}
 
 
