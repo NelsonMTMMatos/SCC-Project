@@ -8,8 +8,6 @@ import java.time.Period;
 
 public class Rental {
 
-    private String houseId;
-
     private String userId;
 
     private String startDate;
@@ -22,14 +20,6 @@ public class Rental {
         this.userId = userId;
         this.startDate = Helpers.toISO8601String(startDate);
         this.endDate = Helpers.toISO8601String(endDate);
-    }
-
-    public String getHouseId() {
-        return houseId;
-    }
-
-    public void setHouseId(String houseId) {
-        this.houseId = houseId;
     }
 
     public String getUserId() {
@@ -58,7 +48,7 @@ public class Rental {
 
     @Override
     public String toString() {
-        return "Rental [ houseId=" + houseId + ", userId=" + userId
+        return "Rental [ userId=" + userId
                 + ", startDate=" + startDate + ", endDate=" + endDate + "]";
     }
 }

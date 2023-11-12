@@ -11,10 +11,12 @@ import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.util.CosmosPagedIterable;
 
+import jakarta.ws.rs.core.Response;
 import scc.data.*;
 import scc.utils.Helpers;
 
 import java.time.LocalDate;
+import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -129,9 +131,14 @@ public class CosmosDBLayer {
 
 	public CosmosItemResponse<RentalDAO> createRental(RentalDAO rental){
 		init();
+
 		PeriodDAO existingPeriod = this.getRentalPeriod(rental.getHouseId(), rental.getStartDate(), rental.getEndDate());
 		int periodDiscount = this.splitPeriods(rental.getHouseId(), rental.getStartDate(), rental.getEndDate(), existingPeriod);
-		rental.setPrice(rental.getPrice() * (1 - periodDiscount * 0.01));
+
+		int days = Period.between(LocalDate.parse(rental.getStartDate()),
+				LocalDate.parse(rental.getEndDate())).getDays();
+		rental.setPrice(rental.getPrice() * days * (1 - periodDiscount * 0.01));
+
 		return rentals.createItem(rental);
 	}
 
@@ -140,7 +147,16 @@ public class CosmosDBLayer {
 		PartitionKey key = new PartitionKey(rental.getId());
 
 		var oldRental = getRentalById(rental.getId()).getItem();
-		PeriodDAO oldPeriod = this.getRentalPeriod(oldRental.getHouseId(), oldRental.getStartDate(), oldRental.getEndDate());
+		//Period x y -> discounted
+		int days = Period.between(LocalDate.parse(oldRental.getStartDate()),
+				LocalDate.parse(oldRental.getEndDate())).getDays();
+		double oldPrice = oldRental.getPrice() / days;
+		int discount = (int) (((rental.getPrice()/ oldPrice) - 1) * 100);
+		//int discount = (int) (1 - (oldPrice / rental.getPrice())) * 100;
+
+		//int discountings = (int) - (oldPrice / (rental.getPrice() * days * 0.01) - 100);
+
+		PeriodDAO oldPeriod = new PeriodDAO(oldRental.getHouseId(), discount, oldRental.getStartDate(), oldRental.getEndDate());
 
 		try{
 			createPeriod(oldPeriod);
@@ -148,10 +164,11 @@ public class CosmosDBLayer {
 			PeriodDAO newPeriod = this.getRentalPeriod(rental.getHouseId(), rental.getStartDate(), rental.getEndDate());
 
 			int newPeriodDiscount = this.splitPeriods(rental.getHouseId(), rental.getStartDate(), rental.getEndDate(), newPeriod);
-			rental.setPrice(rental.getPrice() * (1 - newPeriodDiscount * 0.01));
+			rental.setPrice(rental.getPrice() * days * (1 - newPeriodDiscount * 0.01));
 
 		} catch (NoSuchElementException e) {
 			this.splitPeriods(oldRental.getHouseId(), oldRental.getStartDate(), oldRental.getEndDate(), oldPeriod);
+
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

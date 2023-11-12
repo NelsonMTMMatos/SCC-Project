@@ -56,9 +56,6 @@ public class QuestionResource {
             if (e.getStatusCode() == 404) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
-            if (e.getStatusCode() == 409) {
-                return Response.status(Response.Status.CONFLICT).build();
-            }
         }catch (Exception e) {
             e.printStackTrace();
         }

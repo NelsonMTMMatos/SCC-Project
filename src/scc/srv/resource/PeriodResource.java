@@ -52,8 +52,6 @@ public class PeriodResource {
         } catch (CosmosException e) {
             if (e.getStatusCode() == 404)
                 return Response.status(Response.Status.NOT_FOUND).build();
-            if (e.getStatusCode() == 409)
-                return Response.status(Response.Status.CONFLICT).build();
         }catch (Exception e) {
             return Response.status(401, "Period intersects with others of same price").build();
         }

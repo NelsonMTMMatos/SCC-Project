@@ -46,14 +46,9 @@ public class RentalResource {
 
             HouseDAO hDAO = existentHouse(jedis, houseId, db);
 
-            int days = Period.between(LocalDate.parse(rental.getStartDate()),
-                    LocalDate.parse(rental.getEndDate())).getDays();
-
-            double price = hDAO.getPrice() * days;
-
             RentalDAO rDAO = new RentalDAO(rental);
             rDAO.setHouseId(houseId);
-            rDAO.setPrice(price);
+            rDAO.setPrice(hDAO.getPrice());
 
             rDAO = db.createRental(rDAO).getItem();
 
@@ -65,8 +60,8 @@ public class RentalResource {
             return Response.ok(rentalId).build();
 
         } catch (CosmosException e) {
-            if (e.getStatusCode() == 409)
-                return Response.status(Response.Status.CONFLICT).build();
+            if (e.getStatusCode() == 404)
+                return Response.status(Response.Status.NOT_FOUND).build();
         }catch (NoSuchElementException e) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         } catch (Exception e) {
@@ -88,13 +83,8 @@ public class RentalResource {
             RentalDAO rDAO = new RentalDAO(rental);
             rDAO.setId(rentalId);
 
-            int days = Period.between(LocalDate.parse(rental.getStartDate()),
-                    LocalDate.parse(rental.getEndDate())).getDays();
-
-            double price = hDAO.getPrice() * days;
-
             rDAO.setHouseId(houseId);
-            rDAO.setPrice(price);
+            rDAO.setPrice(hDAO.getPrice());
 
             rDAO = db.updateRental(rDAO).getItem();
 
@@ -102,6 +92,7 @@ public class RentalResource {
             jedis.set(rentalIdInCache, new ObjectMapper().writeValueAsString(rDAO));
 
             return Response.ok(rDAO.toRental()).build();
+
         } catch (CosmosException e) {
             if (e.getStatusCode() == 404) {
                 return Response.status(Response.Status.NOT_FOUND).build();
