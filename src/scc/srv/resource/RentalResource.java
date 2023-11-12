@@ -27,7 +27,6 @@ public class RentalResource {
     }
 
     @POST
-    @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response createRental(@PathParam(HOUSE_ID) String houseId, Rental rental) {

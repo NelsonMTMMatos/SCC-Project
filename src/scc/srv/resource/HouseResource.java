@@ -37,7 +37,6 @@ public class HouseResource {
     }
 
     @POST
-    @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response createHouse(House house){
@@ -134,7 +133,6 @@ public class HouseResource {
     }
 
     @GET
-    @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     public Response availableHousesByFilter(@QueryParam(LOCATION) String location,
                                             @QueryParam(START_DATE) String startDate,

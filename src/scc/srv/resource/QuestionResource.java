@@ -7,6 +7,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import redis.clients.jedis.Jedis;
 import scc.cache.RedisCache;
+import scc.data.HouseDAO;
 import scc.data.Question;
 import scc.data.QuestionDAO;
 import scc.db.CosmosDBLayer;
@@ -24,6 +25,8 @@ public class QuestionResource {
 
     private final String QUESTION_CACHE_ENTRY_FORMAT = "question:%s";
 
+    private final String HOUSE_QUESTIONS_CACHE_ENTRY_FORMAT = "house:%s:questions";
+
     private final CosmosDBLayer db;
 
     public QuestionResource(){
@@ -31,7 +34,6 @@ public class QuestionResource {
     }
 
     @POST
-    @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response createQuestion(@PathParam(HOUSE_ID) String houseId, Question question){
@@ -41,10 +43,12 @@ public class QuestionResource {
 
             QuestionDAO newQuestion = new QuestionDAO(question);
 
-            db.createQuestion(newQuestion);
+            newQuestion = db.createQuestion(newQuestion).getItem();
 
-            String questionIdInCache = String.format(QUESTION_CACHE_ENTRY_FORMAT, question.getHouseId());
-            jedis.set(questionIdInCache, new ObjectMapper().writeValueAsString(newQuestion));
+            ObjectMapper mapper = new ObjectMapper();
+
+            String questionIdInCache = String.format(QUESTION_CACHE_ENTRY_FORMAT, newQuestion.getId());
+            jedis.set(questionIdInCache, mapper.writeValueAsString(newQuestion));
 
             return Response.ok(newQuestion.getId()).build();
         } catch (CosmosException e) {
@@ -77,7 +81,8 @@ public class QuestionResource {
             else
                 qDao = db.getQuestionById(questionId).getItem();
 
-            // check if question belongs to house
+            if(!houseId.equals(qDao.getHouseId()))
+                return Response.status(Response.Status.UNAUTHORIZED).build();
 
             qDao.setReplyContent(reply);
             db.replyToQuestion(qDao);
@@ -96,17 +101,22 @@ public class QuestionResource {
     }
 
     @GET
-    @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     public Response listQuestions(@PathParam(HOUSE_ID) String houseId){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
             existentHouse(jedis, houseId, db);
 
-            //Check if query is in cache
+            String questionsInCache = String.format(HOUSE_QUESTIONS_CACHE_ENTRY_FORMAT, houseId);
+            String res = jedis.get(questionsInCache);
+            ObjectMapper mapper = new ObjectMapper();
+
+            if(res != null)
+                return Response.ok(mapper.readValue(res, List.class)).build();
 
             List<QuestionDAO> questions = db.getHouseQuestions(houseId).stream().collect(Collectors.toList());
 
-            //Put query result in cache
+            jedis.set(questionsInCache, mapper.writeValueAsString(questions));
+            jedis.expire(questionsInCache, 30);
 
             return Response.ok(questions).build();
         }catch (Exception e){

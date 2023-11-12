@@ -40,7 +40,6 @@ public class MediaResource
 	 * Post a new image.The id of the image is its hash.
 	 */
 	@POST
-	@Path("/")
 	@Consumes(MediaType.APPLICATION_OCTET_STREAM)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String upload(byte[] contents) {

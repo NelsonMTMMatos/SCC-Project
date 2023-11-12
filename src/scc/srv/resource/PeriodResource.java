@@ -28,7 +28,6 @@ public class PeriodResource {
     }
 
     @POST
-    @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response addPeriod(@PathParam(HOUSE_ID) String houseId, Period period){
