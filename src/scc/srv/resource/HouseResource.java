@@ -42,11 +42,11 @@ public class HouseResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response createHouse(House house){
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
+            HouseDAO hDAO = new HouseDAO(house);
 
-            String id = house.getId();
+            String id = hDAO.getId();
             String idInCache = String.format(HOUSE_CACHE_ENTRY_FORMAT, id);
 
-            HouseDAO hDAO = new HouseDAO(house);
             db.createHouse(hDAO);
 
             jedis.set(idInCache, new ObjectMapper().writeValueAsString(hDAO));

@@ -9,6 +9,9 @@ import scc.authentication.Session;
 import scc.cache.CacheException;
 import scc.cache.RedisCache;
 
+import javax.swing.text.DateFormatter;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 
 public class Helpers {
@@ -33,5 +36,10 @@ public class Helpers {
         if (!s.getUser().equals(id) && !s.getUser().equals("admin"))
             return null;
         return s;
+    }
+
+    public static String toISO8601String(String date){
+        return LocalDate.parse(date, DateTimeFormatter.ISO_DATE).toString();
+        //return String.format("%sT00:00:00.0000000", date);
     }
 }

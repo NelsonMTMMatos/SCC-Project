@@ -36,7 +36,7 @@ public class RentalResource {
             RentalDAO rDAO = new RentalDAO(rental);
             db.createRental(rDAO);
 
-            String rentalId = rental.getId();
+            String rentalId = rDAO.getId();
             String rentalIdInCache = String.format(RENTAL_CACHE_ENTRY_FORMAT, rentalId);
 
             jedis.set(rentalIdInCache, new ObjectMapper().writeValueAsString(rDAO));
@@ -103,9 +103,8 @@ public class RentalResource {
             return Response.ok(rDAO.toRental()).build();
 
         } catch (CosmosException e) {
-            if (e.getStatusCode() == 404) {
+            if (e.getStatusCode() == 404)
                 return Response.status(Response.Status.NOT_FOUND).build();
-            }
         } catch (Exception e) {
             e.printStackTrace();
         }

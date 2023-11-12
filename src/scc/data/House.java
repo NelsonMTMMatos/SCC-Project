@@ -4,32 +4,23 @@ import java.util.Arrays;
 
 public class House {
 
-    private String id;
     private String name;
     private String location;
     private String description;
+    private double price;
     private String[] photoIds;
     private String ownerId;
 
     public House() {}
 
-    public House(String id, String name, String location, String description, String[] photoIds, String ownerId) {
-        this.id = id;
+    public House(String name, String location, String description, double price, String[] photoIds, String ownerId) {
         this.name = name;
         this.location = location;
         this.description = description;
+        this.price = price;
         this.photoIds = photoIds;
         this.ownerId = ownerId;
     }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
 
     public String getName() {
         return name;
@@ -55,6 +46,10 @@ public class House {
         this.description = description;
     }
 
+    public double getPrice() { return price; }
+
+    public void setPrice(double price) { this.price = price; }
+
     public String[] getPhotoIds() {
         return photoIds == null ? new String[0] : photoIds;
     }
@@ -74,10 +69,10 @@ public class House {
     @Override
     public String toString() {
         return "House{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
+                "  name='" + name + '\'' +
                 ", location='" + location + '\'' +
                 ", description='" + description + '\'' +
+                ", price='" + price + '\'' +
                 ", photoIds='" + Arrays.toString(photoIds) + '\'' +
                 ", ownerId='" + ownerId + '\'' +
                 '}';

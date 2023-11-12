@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.Arrays;
+import java.util.UUID;
 
 public class RentalDAO {
 
@@ -22,12 +23,12 @@ public class RentalDAO {
     public RentalDAO() {}
 
     public RentalDAO(Rental r) {
-        this(r.getId(), r.getHouseId(), r.getUserId(), r.getStartDate(), r.getEndDate(), r.getPrice());
+        this(r.getHouseId(), r.getUserId(), r.getStartDate(), r.getEndDate(), r.getPrice());
     }
 
-    public RentalDAO(String id, String houseId, String userId, String startDate, String endDate, int price) {
+    public RentalDAO(String houseId, String userId, String startDate, String endDate, int price) {
         super();
-        this.id = id;
+        this.id = UUID.randomUUID().toString();
         this.houseId = houseId;
         this.userId = userId;
         this.startDate = startDate;
@@ -100,12 +101,12 @@ public class RentalDAO {
     }
 
     public Rental toRental(){
-        return new Rental(id, houseId, userId, startDate, endDate, price);
+        return new Rental(houseId, userId, startDate, endDate, price);
     }
 
     @Override
     public String toString() {
-        return "UserDAO [_rid=" + _rid + ", _ts=" + _ts + ", id=" + id + ", houseId=" + houseId + ", userId=" + userId
+        return "RentalDAO [_rid=" + _rid + ", _ts=" + _ts + ", id=" + id + ", houseId=" + houseId + ", userId=" + userId
                 + ", startDate=" + startDate + ", endDate=" + endDate + ", price=" + price + "]";
     }
 

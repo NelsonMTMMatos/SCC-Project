@@ -12,10 +12,12 @@ import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.util.CosmosPagedIterable;
 
 import scc.data.*;
+import scc.utils.Helpers;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -53,7 +55,7 @@ public class CosmosDBLayer {
 		this.client = client;
 	}
 	
-	private synchronized void init() {
+	protected synchronized void init() {
 		if( db != null)
 			return;
 		db = client.getDatabase(DB_NAME);
@@ -130,6 +132,7 @@ public class CosmosDBLayer {
 
 	public CosmosItemResponse<RentalDAO> createRental(RentalDAO rental){
 		init();
+		this.splitPeriods(rental.getHouseId(), rental.getStartDate(), rental.getEndDate());
 		return rentals.createItem(rental);
 	}
 
@@ -175,11 +178,6 @@ public class CosmosDBLayer {
 
 		return availableHouses;
   }
-  
-	public CosmosItemResponse<PeriodDAO> createPeriod(PeriodDAO period){
-		init();
-		return periods.createItem(period);
-	}
 
 	public CosmosItemResponse<QuestionDAO> createQuestion(QuestionDAO question){
 		init();
@@ -204,9 +202,117 @@ public class CosmosDBLayer {
 		return questions.readItem(id, key, QuestionDAO.class);
 	}
 
+	public CosmosItemResponse<PeriodDAO> createPeriod(PeriodDAO period) throws Exception {
+		init();
+
+		CosmosPagedIterable<PeriodDAO> intersectingPeriods = getIntersectingPeriods(period.getHouseId(),
+				period.getStartDate(), period.getEndDate());
+		LocalDate newStart = LocalDate.parse(period.getStartDate());
+		LocalDate newEnd = LocalDate.parse(period.getEndDate());
+
+		// Merge adjacent periods with the same price
+		for (PeriodDAO p : intersectingPeriods){
+			// Periods must have the same price to be merged
+			if (period.getDiscount() != p.getDiscount())
+				throw new Exception("Period intersects with others of different price");
+
+			LocalDate start = LocalDate.parse(p.getStartDate());
+			LocalDate end = LocalDate.parse(p.getEndDate());
+			if(start.isBefore(newStart))
+				newStart = start;
+
+			if(end.isAfter(newEnd))
+				newEnd = end;
+
+			periods.deleteItem(p, new CosmosItemRequestOptions());
+		}
+
+		period.setStartDate(Helpers.toISO8601String(newStart.toString()));
+		period.setEndDate(Helpers.toISO8601String(newEnd.toString()));
+
+		return periods.createItem(period);
+	}
+
+	//Ancillary methods
+
+	private CosmosPagedIterable<PeriodDAO> getIntersectingPeriods(String houseId, String startDate, String endDate){
+		init();
+
+		String query = String.format("SELECT * FROM periods \n" +
+						"WHERE periods.houseId = '%s' \n" +
+						"AND periods.startDate <= '%s' \n" +
+						"AND periods.endDate >= '%s'",
+				houseId, endDate, startDate);
+		return periods.queryItems(query, new CosmosQueryRequestOptions(), PeriodDAO.class);
+	}
+
+	private PeriodDAO getRentalPeriod(String houseId, String startDate, String endDate){
+		init();
+
+		String query = String.format("SELECT * FROM periods \n" +
+						"WHERE periods.houseId = '%s' \n" +
+						"AND '%s' >= periods.startDate \n" +
+						"AND '%s' <= periods.endDate",
+				houseId, startDate, endDate);
+
+		return periods.queryItems(query, new CosmosQueryRequestOptions(), PeriodDAO.class).iterator().next();
+	}
+
+	private void splitPeriods(String houseId, String startDate, String endDate){
+		//Periods
+		PeriodDAO pStart = null;
+		PeriodDAO pEnd = null;
+		PeriodDAO existingPeriod = this.getRentalPeriod(houseId, startDate, endDate);
+
+		//Dates
+		LocalDate start = LocalDate.parse(startDate);
+		LocalDate end = LocalDate.parse(endDate);
+		LocalDate existingStart = LocalDate.parse(existingPeriod.getStartDate());
+		LocalDate existingEnd = LocalDate.parse(existingPeriod.getEndDate());
+
+		int discount = existingPeriod.getDiscount();
+
+		if (existingStart.isEqual(start))
+			pEnd = new PeriodDAO( houseId, discount, end.plusDays(1).toString(), existingEnd.toString());
+		else if (existingEnd.isEqual(end))
+			pStart = new PeriodDAO(houseId, discount, existingStart.toString(), start.minusDays(1).toString());
+		else {
+			pStart = new PeriodDAO(houseId, discount, existingStart.toString(), start.minusDays(1).toString());
+			pEnd = new PeriodDAO(houseId, discount, end.plusDays(1).toString(), existingEnd.toString());
+		}
+
+		if(pStart != null)
+			periods.createItem(pStart);
+
+		if (pEnd != null)
+			periods.createItem(pEnd);
+
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	public void close() {
 		client.close();
 	}
-	
-	
 }

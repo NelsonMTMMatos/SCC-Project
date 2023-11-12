@@ -13,13 +13,13 @@ public class MainApplication extends Application
 
 	public MainApplication() {
 		resources.add(ControlResource.class);
-    
-		singletons.add( new MediaResource());
-		singletons.add( new UserResource());
-		singletons.add( new HouseResource());
-		singletons.add( new RentalResource());
-		singletons.add( new QuestionResource());
 
+		singletons.add( new HouseResource());
+		singletons.add( new MediaResource());
+		singletons.add( new PeriodResource());
+		singletons.add( new QuestionResource());
+		singletons.add( new RentalResource());
+		singletons.add( new UserResource());
 	}
 
 	@Override

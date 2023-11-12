@@ -8,6 +8,7 @@ import com.azure.storage.blob.models.BlobItem;
 import scc.utils.Hash;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 import jakarta.ws.rs.Consumes;
@@ -84,7 +85,7 @@ public class MediaResource
 	@Path("/list")
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<String> list() {
-		return containerClient.listBlobs().stream().map((BlobItem::getName)).toList();
+		return containerClient.listBlobs().stream().map((BlobItem::getName)).collect(Collectors.toList());
 	}
 
 }

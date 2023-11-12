@@ -1,12 +1,12 @@
 package scc.data;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import scc.utils.Helpers;
 
 import java.time.LocalDate;
 import java.time.Period;
 
 public class Rental {
-    private String id;
     private String houseId;
     private String userId;
 
@@ -17,21 +17,12 @@ public class Rental {
 
     public Rental(){}
 
-    public Rental(String id, String houseId, String userId, String startDate, String endDate, int price) {
-        this.id = id;
+    public Rental(String houseId, String userId, String startDate, String endDate, int price) {
         this.houseId = houseId;
         this.userId = userId;
-        this.startDate = startDate;
-        this.endDate = endDate;
+        this.startDate = Helpers.toISO8601String(startDate);
+        this.endDate = Helpers.toISO8601String(endDate);
         this.price = price;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public String getHouseId() {
@@ -72,5 +63,11 @@ public class Rental {
 
     public void setPrice(int price) {
         this.price = price;
+    }
+
+    @Override
+    public String toString() {
+        return "Rental [ houseId=" + houseId + ", userId=" + userId
+                + ", startDate=" + startDate + ", endDate=" + endDate + ", price=" + price + "]";
     }
 }
