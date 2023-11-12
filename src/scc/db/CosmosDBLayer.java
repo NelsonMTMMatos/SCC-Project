@@ -281,6 +281,8 @@ public class CosmosDBLayer {
 			pEnd = new PeriodDAO(houseId, discount, end.plusDays(1).toString(), existingEnd.toString());
 		}
 
+		periods.deleteItem(existingPeriod, new CosmosItemRequestOptions());
+
 		if(pStart != null)
 			periods.createItem(pStart);
 

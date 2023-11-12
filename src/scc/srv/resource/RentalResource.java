@@ -11,6 +11,8 @@ import scc.data.Rental;
 import scc.data.RentalDAO;
 import scc.db.CosmosDBLayer;
 
+import java.util.NoSuchElementException;
+
 import static scc.srv.resource.HouseResource.HOUSE_ID;
 import static scc.srv.resource.HouseResource.existentHouse;
 
@@ -44,9 +46,10 @@ public class RentalResource {
             return Response.ok(rentalId).build();
 
         } catch (CosmosException e) {
-            if (e.getStatusCode() == 409) {
+            if (e.getStatusCode() == 409)
                 return Response.status(Response.Status.CONFLICT).build();
-            }
+        }catch (NoSuchElementException e) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -64,13 +67,13 @@ public class RentalResource {
             existentHouse(jedis, houseId, db);
 
             RentalDAO rDAO = new RentalDAO(rental);
-            db.updateRental(rDAO);
+            rDAO.setId(rentalId);
+            rDAO = db.updateRental(rDAO).getItem();
 
             String rentalIdInCache = String.format(RENTAL_CACHE_ENTRY_FORMAT, rentalId);
             jedis.set(rentalIdInCache, new ObjectMapper().writeValueAsString(rDAO));
 
             return Response.ok(rDAO.toRental()).build();
-
         } catch (CosmosException e) {
             if (e.getStatusCode() == 404) {
                 return Response.status(Response.Status.NOT_FOUND).build();

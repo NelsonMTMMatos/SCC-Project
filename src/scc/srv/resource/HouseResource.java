@@ -91,13 +91,14 @@ public class HouseResource {
     public Response updateHouse(@PathParam(HOUSE_ID) String id, House house){
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-            HouseDAO hDAO = db.updateHouse(new HouseDAO(house)).getItem();
+            HouseDAO hDAO = new HouseDAO(house);
+            hDAO.setId(id);
+            hDAO = db.updateHouse(hDAO).getItem();
 
             String idInCache = String.format(HOUSE_CACHE_ENTRY_FORMAT, id);
             jedis.set(idInCache, new ObjectMapper().writeValueAsString(hDAO));
 
             return Response.ok(hDAO.toHouse()).build();
-
         } catch (CosmosException e) {
             if (e.getStatusCode() == 404) {
                 return Response.status(Response.Status.NOT_FOUND).build();
