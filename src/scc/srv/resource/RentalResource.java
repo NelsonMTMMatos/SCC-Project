@@ -15,9 +15,6 @@ import scc.data.RentalDAO;
 import scc.db.CosmosDBLayer;
 import scc.utils.Helpers;
 
-import java.time.LocalDate;
-import java.time.Period;
-import java.time.temporal.ChronoUnit;
 import java.util.NoSuchElementException;
 
 import static scc.srv.resource.HouseResource.HOUSE_ID;
@@ -97,6 +94,9 @@ public class RentalResource {
             if (e.getStatusCode() == 404) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
+        } catch (NotAuthorizedException e) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
