@@ -1,0 +1,12 @@
+{
+  "scriptFile" : "../scc2324-phase1-1.0.jar",
+  "entryPoint" : "scc.serverless.BlobStoreFunction.setLastBlobInfo",
+  "bindings" : [ {
+    "type" : "blobTrigger",
+    "direction" : "in",
+    "name" : "blobtest",
+    "path" : "images/{name}",
+    "dataType" : "binary",
+    "connection" : "DefaultEndpointsProtocol=https;AccountName=sccwesteurope60665;AccountKey=SakjTZehYUL1diOznxScDbvPisS3o1c2CaOG0ObMqMN7f4+4bjyL1yVL0I2VCgyE7wJNUWqQ/T+k+AStKxU11g==;EndpointSuffix=core.windows.net"
+  } ]
+}

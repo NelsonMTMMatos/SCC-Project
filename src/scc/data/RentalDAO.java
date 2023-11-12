@@ -10,30 +10,33 @@ import java.util.UUID;
 public class RentalDAO {
 
     private String _rid;
+
     private String _ts;
+
     private String id;
+
     private String houseId;
+
     private String userId;
 
     private String startDate;
 
     private String endDate;
-    private int price;
+
+    private double price;
 
     public RentalDAO() {}
 
     public RentalDAO(Rental r) {
-        this(r.getHouseId(), r.getUserId(), r.getStartDate(), r.getEndDate(), r.getPrice());
+        this(r.getUserId(), r.getStartDate(), r.getEndDate());
     }
 
-    public RentalDAO(String houseId, String userId, String startDate, String endDate, int price) {
+    public RentalDAO(String userId, String startDate, String endDate) {
         super();
         this.id = UUID.randomUUID().toString();
-        this.houseId = houseId;
         this.userId = userId;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.price = price;
     }
 
     public String get_rid() {
@@ -92,16 +95,16 @@ public class RentalDAO {
         this.endDate = endDate;
     }
 
-    public int getPrice() {
+    public double getPrice() {
         return price;
     }
 
-    public void setPrice(int price) {
+    public void setPrice(double price) {
         this.price = price;
     }
 
     public Rental toRental(){
-        return new Rental(houseId, userId, startDate, endDate, price);
+        return new Rental(userId, startDate, endDate);
     }
 
     @Override

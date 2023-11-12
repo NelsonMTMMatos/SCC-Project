@@ -3,14 +3,21 @@ package scc.srv.resource;
 import com.azure.cosmos.CosmosException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import redis.clients.jedis.Jedis;
+import scc.authentication.Session;
 import scc.cache.RedisCache;
+import scc.data.HouseDAO;
 import scc.data.Rental;
 import scc.data.RentalDAO;
 import scc.db.CosmosDBLayer;
+import scc.utils.Helpers;
 
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.temporal.ChronoUnit;
 import java.util.NoSuchElementException;
 
 import static scc.srv.resource.HouseResource.HOUSE_ID;
@@ -29,13 +36,26 @@ public class RentalResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createRental(@PathParam(HOUSE_ID) String houseId, Rental rental) {
+    public Response createRental(@CookieParam("scc:session") Cookie session, @PathParam(HOUSE_ID) String houseId, Rental rental) {
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-            existentHouse(jedis, houseId, db);
+            Session s = Helpers.checkCookieUser(session, rental.getUserId());
+
+            if(s == null)
+                return Response.status(Response.Status.UNAUTHORIZED).build();
+
+            HouseDAO hDAO = existentHouse(jedis, houseId, db);
+
+            int days = Period.between(LocalDate.parse(rental.getStartDate()),
+                    LocalDate.parse(rental.getEndDate())).getDays();
+
+            double price = hDAO.getPrice() * days;
 
             RentalDAO rDAO = new RentalDAO(rental);
-            db.createRental(rDAO);
+            rDAO.setHouseId(houseId);
+            rDAO.setPrice(price);
+
+            rDAO = db.createRental(rDAO).getItem();
 
             String rentalId = rDAO.getId();
             String rentalIdInCache = String.format(RENTAL_CACHE_ENTRY_FORMAT, rentalId);
@@ -63,10 +83,19 @@ public class RentalResource {
     public Response updateRental(@PathParam(HOUSE_ID) String houseId, @PathParam(RENTAL_ID) String rentalId, Rental rental) {
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-            existentHouse(jedis, houseId, db);
+            HouseDAO hDAO = existentHouse(jedis, houseId, db);
 
             RentalDAO rDAO = new RentalDAO(rental);
             rDAO.setId(rentalId);
+
+            int days = Period.between(LocalDate.parse(rental.getStartDate()),
+                    LocalDate.parse(rental.getEndDate())).getDays();
+
+            double price = hDAO.getPrice() * days;
+
+            rDAO.setHouseId(houseId);
+            rDAO.setPrice(price);
+
             rDAO = db.updateRental(rDAO).getItem();
 
             String rentalIdInCache = String.format(RENTAL_CACHE_ENTRY_FORMAT, rentalId);

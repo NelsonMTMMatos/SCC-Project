@@ -7,22 +7,21 @@ import java.time.LocalDate;
 import java.time.Period;
 
 public class Rental {
+
     private String houseId;
+
     private String userId;
 
     private String startDate;
 
     private String endDate;
-    private int price;
 
     public Rental(){}
 
-    public Rental(String houseId, String userId, String startDate, String endDate, int price) {
-        this.houseId = houseId;
+    public Rental(String userId, String startDate, String endDate) {
         this.userId = userId;
         this.startDate = Helpers.toISO8601String(startDate);
         this.endDate = Helpers.toISO8601String(endDate);
-        this.price = price;
     }
 
     public String getHouseId() {
@@ -57,17 +56,9 @@ public class Rental {
         this.endDate = endDate;
     }
 
-    public int getPrice() {
-        return price;
-    }
-
-    public void setPrice(int price) {
-        this.price = price;
-    }
-
     @Override
     public String toString() {
         return "Rental [ houseId=" + houseId + ", userId=" + userId
-                + ", startDate=" + startDate + ", endDate=" + endDate + ", price=" + price + "]";
+                + ", startDate=" + startDate + ", endDate=" + endDate + "]";
     }
 }
