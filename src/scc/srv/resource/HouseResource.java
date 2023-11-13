@@ -10,8 +10,6 @@ import redis.clients.jedis.Jedis;
 import scc.cache.RedisCache;
 import scc.data.House;
 import scc.data.HouseDAO;
-import scc.data.Question;
-import scc.data.QuestionDAO;
 import scc.db.CosmosDBLayer;
 
 import java.util.List;
@@ -29,6 +27,10 @@ public class HouseResource {
     private final String END_DATE = "endDate";
 
     protected static final String HOUSE_CACHE_ENTRY_FORMAT = "house:%s";
+
+    private final String HOUSES_BY_LOCATION_CACHE_ENTRY_FORMAT = "location:%s:houses";
+
+    private final String HOUSES_BY_LOCATION_AND_PERIOD_CACHE_ENTRY_FORMAT = "location:%s:startDate:%s:endDate:%s:houses";
 
     private final CosmosDBLayer db;
 
@@ -134,8 +136,45 @@ public class HouseResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response availableHousesByFilter(@QueryParam(LOCATION) String location,
                                             @QueryParam(START_DATE) String startDate,
-                                            @QueryParam(END_DATE) String endDate){
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+                                            @QueryParam(END_DATE) String endDate) {
+
+        try(Jedis jedis = RedisCache.getCachePool().getResource()) {
+
+            ObjectMapper mapper = new ObjectMapper();
+            String res;
+            List<HouseDAO> availableHouses = null;
+            String idInCache = null;
+
+            if (location != null){
+                if (startDate != null && endDate != null) {
+
+
+                    /*idInCache = String.format(HOUSES_BY_LOCATION_AND_PERIOD_CACHE_ENTRY_FORMAT, location, startDate, endDate);
+                    res = jedis.get(idInCache);
+                    if(res != null)
+                        return Response.ok(mapper.readValue(res, List.class)).build();*/
+
+                    return db.getHousesByPeriodAndLocation(startDate, endDate, location);
+
+                }else {
+                    /*idInCache = String.format(HOUSES_BY_LOCATION_CACHE_ENTRY_FORMAT, location);
+                    res = jedis.get(idInCache);
+                    if(res != null)
+                        return Response.ok(mapper.readValue(res, List.class)).build();*/
+                    availableHouses = db.getHousesByLocation(location).stream().collect(Collectors.toList());
+                }
+            }
+
+            if (availableHouses != null){
+               // jedis.set(idInCache, mapper.writeValueAsString(availableHouses));
+                return Response.ok(availableHouses).build();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return Response.status(Response.Status.BAD_REQUEST).build();
     }
 
     @GET

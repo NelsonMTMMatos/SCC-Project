@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CosmosDBLayer {
 	private static final String CONNECTION_URL = System.getenv("COSMOSDB_URL");
@@ -185,36 +186,60 @@ public class CosmosDBLayer {
 		return rentals.readItem(id, key, RentalDAO.class);
 	}
 
-	public CosmosPagedIterable<HouseDAO> getHousesByLocation(String location){
+	public CosmosPagedIterable<HouseDAO> getHousesByLocation(String location) {
 		init();
 		String query = String.format("SELECT * FROM houses WHERE houses.location='%s'", location);
 		return houses.queryItems(query, new CosmosQueryRequestOptions(), HouseDAO.class);
 	}
 
-	public List<HouseDAO> getHousesByPeriodAndLocation(LocalDate startDate, LocalDate endDate, String location){
+	public Response getHousesByPeriodAndLocation(String startDate, String endDate, String location){
 		init();
-		DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-ddTHH:mm:ss.fffffffZ");
-		String start_date = startDate.format(format);
-		String end_date = endDate.format(format);
+		String end = Helpers.toISO8601String(endDate);
+		String start = Helpers.toISO8601String(startDate);
+		String periodQuery = String.format("SELECT DISTINCT periods.houseId FROM periods " +
+				"WHERE periods.startDate <= '%s' AND periods.endDate >= '%s'",
+				end, start);
 
-		String periodQuery = String.format("SELECT DISTINCT periods.house_id FROM periods " +
-				"WHERE NOT (periods.start_date <= '%s' AND periods.end_date >= '%s')", start_date, end_date);
-
-		CosmosPagedIterable<String> houseIds= periods.queryItems(periodQuery, new CosmosQueryRequestOptions(), String.class);
-
+		CosmosPagedIterable<String> houseIds = periods.queryItems(periodQuery, new CosmosQueryRequestOptions(), String.class);
 		List<HouseDAO> availableHouses = new ArrayList<>();
-		for (String houseId : houseIds) {
-			String houseQuery = String.format("SELECT * FROM houses WHERE houses.id = %s AND houses.location = %s", houseId, location);
 
-			CosmosPagedIterable<HouseDAO> houses = this.houses.queryItems(houseQuery, new CosmosQueryRequestOptions(), HouseDAO.class);
 
-			for (HouseDAO house : houses) {
+		return Response.ok(houseIds.stream().collect(Collectors.toList()).get(0)).build();
+		/*for (String houseId : houseIds) {
+			String houseQuery = String.format("SELECT * FROM houses WHERE houses.id='%s' AND houses.location='%s'", houseId, location);
+			return Response.ok("First house: " + houseId + "\n Query: " + houseQuery).build();
+			*//*
+			CosmosPagedIterable<HouseDAO> hs = houses.queryItems(houseQuery, new CosmosQueryRequestOptions(), HouseDAO.class);
+
+			for (HouseDAO house : hs) {
 				availableHouses.add(house);
 			}
+			*//*
 		}
+		return Response.ok("No houses").build();*/
+		//return Response.ok(availableHouses).build();
+	}
 
-		return availableHouses;
-  }
+
+
+  /*
+  	String housesQuery = String.format("SELECT * FROM houses WHERE houses.location = %s')", location);
+  	CosmosPagedIterable<HouseDao> houses= houses.queryItems(housesQuery, new CosmosQueryRequestOptions(), String.class);
+
+  	List<HouseDAO> availableHouses = new ArrayList<>();
+	for (HouseDAO hDAO : houses) {
+		String periodQuery = String.format("SELECT DISTINCT periods.house_id FROM periods " +
+				"WHERE periods.start_date <= '%s' AND periods.end_date >= '%s') AND periods.house_id = '%s'"
+				, endDate, startDate, location);
+
+		boolean condition =
+				this.houses.queryItems(houseQuery, new CosmosQueryRequestOptions(), HouseDAO.class).iterator().hasNext();
+
+		if(condition)
+			availableHouses.add(hDAO);
+	}
+   */
+
 
 	public CosmosItemResponse<QuestionDAO> createQuestion(QuestionDAO question){
 		init();
@@ -247,9 +272,8 @@ public class CosmosDBLayer {
 		LocalDate newStart = LocalDate.parse(period.getStartDate());
 		LocalDate newEnd = LocalDate.parse(period.getEndDate());
 
-		// Merge adjacent periods with the same price
 		for (PeriodDAO p : intersectingPeriods){
-			// Periods must have the same price to be merged
+
 			if (period.getDiscount() != p.getDiscount())
 				throw new Exception("Period intersects with others of different price");
 
