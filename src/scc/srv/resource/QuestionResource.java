@@ -51,9 +51,10 @@ public class QuestionResource {
             jedis.set(questionIdInCache, mapper.writeValueAsString(newQuestion));
 
             return Response.ok(newQuestion.getId()).build();
+
         } catch (CosmosException e) {
-            if (e.getStatusCode() == 409) {
-                return Response.status(Response.Status.CONFLICT).build();
+            if (e.getStatusCode() == 404) {
+                return Response.status(Response.Status.NOT_FOUND).build();
             }
         }catch (Exception e) {
             e.printStackTrace();
@@ -89,6 +90,7 @@ public class QuestionResource {
             jedis.set(questionIdInCache, mapper.writeValueAsString(qDao));
 
             return Response.ok().build();
+
         }catch (CosmosException e) {
             if (e.getStatusCode() == 404) {
                 return Response.status(Response.Status.NOT_FOUND).build();
@@ -119,6 +121,10 @@ public class QuestionResource {
             jedis.expire(questionsInCache, 30);
 
             return Response.ok(questions).build();
+
+        } catch (CosmosException e) {
+            if (e.getStatusCode() == 404)
+                return Response.status(Response.Status.NOT_FOUND).build();
         }catch (Exception e){
             e.printStackTrace();
         }

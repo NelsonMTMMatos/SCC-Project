@@ -1,0 +1,14 @@
+{
+  "scriptFile" : "../scc2324-phase1-1.0.jar",
+  "entryPoint" : "scc.serverless.CosmosDBFunction.updateMostRecentUsers",
+  "bindings" : [ {
+    "type" : "cosmosDBTrigger",
+    "direction" : "in",
+    "name" : "cosmosTest",
+    "databaseName" : "scc24db60665",
+    "connectionStringSetting" : "AccountEndpoint=https://scc2460665.documents.azure.com:443/;AccountKey=R60ncQXbxnDD7gAoap4d4zQQUUlPRhPHgzyUFAHCMhZBkZnz8dfiYIa24m4pkv2mhtfbjmxG1ml5ACDbWnJ4OA==;",
+    "preferredLocations" : "West Europe",
+    "createLeaseCollectionIfNotExists" : true,
+    "collectionName" : "users"
+  } ]
+}

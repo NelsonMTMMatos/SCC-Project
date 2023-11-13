@@ -1,0 +1,16 @@
+{
+  "scriptFile" : "../scc2324-phase1-1.0.jar",
+  "entryPoint" : "scc.serverless.HttpFunction.lrangeRedis",
+  "bindings" : [ {
+    "type" : "httpTrigger",
+    "direction" : "in",
+    "name" : "req",
+    "route" : "serverless/redis/lrange/{key}",
+    "methods" : [ "GET" ],
+    "authLevel" : "ANONYMOUS"
+  }, {
+    "type" : "http",
+    "direction" : "out",
+    "name" : "$return"
+  } ]
+}

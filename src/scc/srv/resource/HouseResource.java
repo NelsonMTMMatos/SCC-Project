@@ -51,10 +51,7 @@ public class HouseResource {
             jedis.set(idInCache, new ObjectMapper().writeValueAsString(hDAO));
 
             return Response.ok(id).build();
-        } catch (CosmosException e) {
-            if (e.getStatusCode() == 409) {
-                return Response.status(Response.Status.CONFLICT).build();
-            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -98,6 +95,7 @@ public class HouseResource {
             jedis.set(idInCache, new ObjectMapper().writeValueAsString(hDAO));
 
             return Response.ok(hDAO.toHouse()).build();
+
         } catch (CosmosException e) {
             if (e.getStatusCode() == 404) {
                 return Response.status(Response.Status.NOT_FOUND).build();

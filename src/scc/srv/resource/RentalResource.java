@@ -3,13 +3,17 @@ package scc.srv.resource;
 import com.azure.cosmos.CosmosException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import redis.clients.jedis.Jedis;
+import scc.authentication.Session;
 import scc.cache.RedisCache;
+import scc.data.HouseDAO;
 import scc.data.Rental;
 import scc.data.RentalDAO;
 import scc.db.CosmosDBLayer;
+import scc.utils.Helpers;
 
 import java.util.NoSuchElementException;
 
@@ -29,13 +33,21 @@ public class RentalResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createRental(@PathParam(HOUSE_ID) String houseId, Rental rental) {
+    public Response createRental(@CookieParam("scc:session") Cookie session, @PathParam(HOUSE_ID) String houseId, Rental rental) {
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-            existentHouse(jedis, houseId, db);
+            Session s = Helpers.checkCookieUser(session, rental.getUserId());
+
+            if(s == null)
+                return Response.status(Response.Status.UNAUTHORIZED).build();
+
+            HouseDAO hDAO = existentHouse(jedis, houseId, db);
 
             RentalDAO rDAO = new RentalDAO(rental);
-            db.createRental(rDAO);
+            rDAO.setHouseId(houseId);
+            rDAO.setPrice(hDAO.getPrice());
+
+            rDAO = db.createRental(rDAO).getItem();
 
             String rentalId = rDAO.getId();
             String rentalIdInCache = String.format(RENTAL_CACHE_ENTRY_FORMAT, rentalId);
@@ -45,8 +57,8 @@ public class RentalResource {
             return Response.ok(rentalId).build();
 
         } catch (CosmosException e) {
-            if (e.getStatusCode() == 409)
-                return Response.status(Response.Status.CONFLICT).build();
+            if (e.getStatusCode() == 404)
+                return Response.status(Response.Status.NOT_FOUND).build();
         }catch (NoSuchElementException e) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         } catch (Exception e) {
@@ -63,20 +75,28 @@ public class RentalResource {
     public Response updateRental(@PathParam(HOUSE_ID) String houseId, @PathParam(RENTAL_ID) String rentalId, Rental rental) {
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-            existentHouse(jedis, houseId, db);
+            HouseDAO hDAO = existentHouse(jedis, houseId, db);
 
             RentalDAO rDAO = new RentalDAO(rental);
             rDAO.setId(rentalId);
+
+            rDAO.setHouseId(houseId);
+            rDAO.setPrice(hDAO.getPrice());
+
             rDAO = db.updateRental(rDAO).getItem();
 
             String rentalIdInCache = String.format(RENTAL_CACHE_ENTRY_FORMAT, rentalId);
             jedis.set(rentalIdInCache, new ObjectMapper().writeValueAsString(rDAO));
 
             return Response.ok(rDAO.toRental()).build();
+
         } catch (CosmosException e) {
             if (e.getStatusCode() == 404) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
+        } catch (NotAuthorizedException e) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+
         } catch (Exception e) {
             e.printStackTrace();
         }

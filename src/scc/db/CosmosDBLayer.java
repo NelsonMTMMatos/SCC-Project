@@ -11,15 +11,15 @@ import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.util.CosmosPagedIterable;
 
+import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.core.Response;
 import scc.data.*;
 import scc.utils.Helpers;
 
 import java.time.LocalDate;
+import java.time.Period;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class CosmosDBLayer {
 	private static final String CONNECTION_URL = System.getenv("COSMOSDB_URL");
@@ -132,13 +132,50 @@ public class CosmosDBLayer {
 
 	public CosmosItemResponse<RentalDAO> createRental(RentalDAO rental){
 		init();
-		this.splitPeriods(rental.getHouseId(), rental.getStartDate(), rental.getEndDate());
+
+		PeriodDAO existingPeriod = this.getRentalPeriod(rental.getHouseId(), rental.getStartDate(), rental.getEndDate());
+		int periodDiscount = this.splitPeriods(rental.getHouseId(), rental.getStartDate(), rental.getEndDate(), existingPeriod);
+
+		int days = Period.between(LocalDate.parse(rental.getStartDate()),
+				LocalDate.parse(rental.getEndDate())).getDays() + 1;
+		rental.setPrice(rental.getPrice() * days * (1 - periodDiscount * 0.01));
+
 		return rentals.createItem(rental);
 	}
 
 	public CosmosItemResponse<RentalDAO> updateRental(RentalDAO rental){
 		init();
 		PartitionKey key = new PartitionKey(rental.getId());
+
+		var oldRental = getRentalById(rental.getId()).getItem();
+
+		int days = Period.between(LocalDate.parse(oldRental.getStartDate()),
+				LocalDate.parse(oldRental.getEndDate())).getDays() + 1;
+
+		int discount = (int) - (oldRental.getPrice() / (rental.getPrice() * days * 0.01) - 100);
+
+		PeriodDAO oldPeriod = new PeriodDAO(oldRental.getHouseId(), discount, oldRental.getStartDate(), oldRental.getEndDate());
+
+		try{
+			createPeriod(oldPeriod);
+
+			PeriodDAO newPeriod = this.getRentalPeriod(rental.getHouseId(), rental.getStartDate(), rental.getEndDate());
+
+			int newPeriodDiscount = this.splitPeriods(rental.getHouseId(), rental.getStartDate(), rental.getEndDate(), newPeriod);
+
+			days = Period.between(LocalDate.parse(rental.getStartDate()),
+					LocalDate.parse(rental.getEndDate())).getDays() + 1;
+
+			rental.setPrice(rental.getPrice() * days * (1 - newPeriodDiscount * 0.01));
+
+		} catch (NoSuchElementException e) {
+			this.splitPeriods(oldRental.getHouseId(), oldRental.getStartDate(), oldRental.getEndDate(), oldPeriod);
+			throw new NotAuthorizedException(e);
+
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+
 		return rentals.replaceItem(rental, rental.getId(), key, new CosmosItemRequestOptions());
 	}
 
@@ -233,6 +270,12 @@ public class CosmosDBLayer {
 		return periods.createItem(period);
 	}
 
+	public CosmosPagedIterable<PeriodDAO> getHousePeriods(String houseId){
+		init();
+		String periodsQuery = String.format("SELECT * FROM periods WHERE periods.houseId = '%s'", houseId);
+		return periods.queryItems(periodsQuery, new CosmosQueryRequestOptions(), PeriodDAO.class);
+	}
+
 	//Ancillary methods
 
 	private CosmosPagedIterable<PeriodDAO> getIntersectingPeriods(String houseId, String startDate, String endDate){
@@ -258,11 +301,10 @@ public class CosmosDBLayer {
 		return periods.queryItems(query, new CosmosQueryRequestOptions(), PeriodDAO.class).iterator().next();
 	}
 
-	private void splitPeriods(String houseId, String startDate, String endDate){
+	private int splitPeriods(String houseId, String startDate, String endDate, PeriodDAO existingPeriod){
 		//Periods
 		PeriodDAO pStart = null;
 		PeriodDAO pEnd = null;
-		PeriodDAO existingPeriod = this.getRentalPeriod(houseId, startDate, endDate);
 
 		//Dates
 		LocalDate start = LocalDate.parse(startDate);
@@ -273,12 +315,12 @@ public class CosmosDBLayer {
 		int discount = existingPeriod.getDiscount();
 
 		if (existingStart.isEqual(start))
-			pEnd = new PeriodDAO( houseId, discount, end.plusDays(1).toString(), existingEnd.toString());
+			pEnd = new PeriodDAO( houseId, discount, end.toString(), existingEnd.toString());
 		else if (existingEnd.isEqual(end))
-			pStart = new PeriodDAO(houseId, discount, existingStart.toString(), start.minusDays(1).toString());
+			pStart = new PeriodDAO(houseId, discount, existingStart.toString(), start.toString());
 		else {
-			pStart = new PeriodDAO(houseId, discount, existingStart.toString(), start.minusDays(1).toString());
-			pEnd = new PeriodDAO(houseId, discount, end.plusDays(1).toString(), existingEnd.toString());
+			pStart = new PeriodDAO(houseId, discount, existingStart.toString(), start.toString());
+			pEnd = new PeriodDAO(houseId, discount, end.toString(), existingEnd.toString());
 		}
 
 		periods.deleteItem(existingPeriod, new CosmosItemRequestOptions());
@@ -288,6 +330,8 @@ public class CosmosDBLayer {
 
 		if (pEnd != null)
 			periods.createItem(pEnd);
+
+		return discount;
 
 	}
 
