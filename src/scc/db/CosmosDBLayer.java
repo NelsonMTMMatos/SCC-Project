@@ -1,26 +1,20 @@
 package scc.db;
 
-import com.azure.cosmos.ConsistencyLevel;
-import com.azure.cosmos.CosmosClient;
-import com.azure.cosmos.CosmosClientBuilder;
-import com.azure.cosmos.CosmosContainer;
-import com.azure.cosmos.CosmosDatabase;
+import com.azure.cosmos.*;
 import com.azure.cosmos.models.CosmosItemRequestOptions;
 import com.azure.cosmos.models.CosmosItemResponse;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.util.CosmosPagedIterable;
-
 import jakarta.ws.rs.NotAuthorizedException;
-import jakarta.ws.rs.core.Response;
 import scc.data.*;
 import scc.utils.Helpers;
 
 import java.time.LocalDate;
 import java.time.Period;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 public class CosmosDBLayer {
 	private static final String CONNECTION_URL = System.getenv("COSMOSDB_URL");
@@ -155,7 +149,7 @@ public class CosmosDBLayer {
 
 		int discount = (int) - (oldRental.getPrice() / (rental.getPrice() * days * 0.01) - 100);
 
-		PeriodDAO oldPeriod = new PeriodDAO(oldRental.getHouseId(), discount, oldRental.getStartDate(), oldRental.getEndDate());
+		PeriodDAO oldPeriod = new PeriodDAO(discount, oldRental.getStartDate(), oldRental.getEndDate());
 
 		try{
 			createPeriod(oldPeriod);
@@ -328,21 +322,25 @@ public class CosmosDBLayer {
 		int discount = existingPeriod.getDiscount();
 
 		if (existingStart.isEqual(start))
-			pEnd = new PeriodDAO( houseId, discount, end.toString(), existingEnd.toString());
+			pEnd = new PeriodDAO(discount, end.toString(), existingEnd.toString());
 		else if (existingEnd.isEqual(end))
-			pStart = new PeriodDAO(houseId, discount, existingStart.toString(), start.toString());
+			pStart = new PeriodDAO(discount, existingStart.toString(), start.toString());
 		else {
-			pStart = new PeriodDAO(houseId, discount, existingStart.toString(), start.toString());
-			pEnd = new PeriodDAO(houseId, discount, end.toString(), existingEnd.toString());
+			pStart = new PeriodDAO(discount, existingStart.toString(), start.toString());
+			pEnd = new PeriodDAO(discount, end.toString(), existingEnd.toString());
 		}
 
 		periods.deleteItem(existingPeriod, new CosmosItemRequestOptions());
 
-		if(pStart != null)
+		if(pStart != null){
+			pStart.setHouseId(houseId);
 			periods.createItem(pStart);
+		}
 
-		if (pEnd != null)
+		if (pEnd != null){
+			pEnd.setHouseId(houseId);
 			periods.createItem(pEnd);
+		}
 
 		return discount;
 

@@ -10,7 +10,6 @@ import java.util.UUID;
 
 public class Period {
 
-    private String houseId;
     private int discount;
 
     private String startDate;
@@ -19,19 +18,10 @@ public class Period {
 
     public Period(){}
 
-    public Period(String houseId, int discount, String startDate, String endDate) {
-        this.houseId = houseId;
+    public Period(int discount, String startDate, String endDate) {
         this.discount = discount;
         this.startDate = startDate;
         this.endDate = endDate;
-    }
-
-    public String getHouseId() {
-        return houseId;
-    }
-
-    public void setHouseId(String houseId) {
-        this.houseId = houseId;
     }
 
     public int getDiscount() {
@@ -62,8 +52,7 @@ public class Period {
     @Override
     public String toString() {
         return "Period{" +
-                " houseId='" + houseId + '\'' +
-                ", discount=" + discount +
+                " Discount=" + discount +
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
                 '}';

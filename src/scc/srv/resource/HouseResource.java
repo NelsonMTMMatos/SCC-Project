@@ -163,7 +163,7 @@ public class HouseResource {
                     res = jedis.get(idInCache);
                     if(res != null)
                         return Response.ok(mapper.readValue(res, List.class)).build();
-                    availableHouses = db.getHousesByLocation(location).stream().collect(Collectors.toList());
+                    availableHouses = db.getHousesByLocation(location).stream().toList();
                 }
             }
 
@@ -194,7 +194,7 @@ public class HouseResource {
             if(res != null)
                 return Response.ok(mapper.readValue(res, List.class)).build();
 
-            List<PeriodDAO> periods = db.discountedPeriods(start, end).stream().collect(Collectors.toList());
+            List<PeriodDAO> periods = db.discountedPeriods(start, end).stream().toList();
 
             jedis.set(periodsInCache, mapper.writeValueAsString(periods));
             jedis.expire(periodsInCache, 30);

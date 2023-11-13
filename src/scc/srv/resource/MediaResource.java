@@ -26,7 +26,7 @@ import jakarta.ws.rs.core.MediaType;
 @Path("/media")
 public class MediaResource
 {
-	String storageConnectionString = System.getenv("BlobStoreConnection");
+	public final String storageConnectionString = System.getenv("BlobStoreConnection");
 
 	BlobContainerClient containerClient;
 

@@ -1,21 +1,15 @@
 package scc.data;
 
 public class Question {
-    private String houseId;
     private String userId;
     private String questionContent;
     private String replyContent;
 
     public Question(){}
 
-    public Question(String houseId, String userId, String questionContent){
-        this.houseId = houseId;
+    public Question(String userId, String questionContent){
         this.userId = userId;
         this.questionContent = questionContent;
-    }
-
-    public String getHouseId() {
-        return houseId;
     }
 
     public String getUserId() {
@@ -36,7 +30,7 @@ public class Question {
 
     @Override
     public String toString() {
-        return "Question [houseId='" + houseId  + ", userId='" + userId +
+        return "Question [userId='" + userId +
                 ", questionContent='" + questionContent + ", replyContent='" + replyContent +
                 ']';
     }

@@ -15,13 +15,12 @@ public class QuestionDAO {
     public QuestionDAO(){}
 
     public QuestionDAO(Question q){
-        this(q.getHouseId(), q.getUserId(), q.getQuestionContent());
+        this(q.getUserId(), q.getQuestionContent());
     }
 
-    public QuestionDAO(String houseId, String userId, String questionContent){
+    public QuestionDAO(String userId, String questionContent){
         super();
         this.id = UUID.randomUUID().toString();
-        this.houseId = houseId;
         this.userId = userId;
         this.questionContent = questionContent;
     }
@@ -29,30 +28,47 @@ public class QuestionDAO {
     public String get_rid() {
         return _rid;
     }
+
     public void set_rid(String _rid) {
         this._rid = _rid;
     }
+
     public String get_ts() {
         return _ts;
     }
+
     public void set_ts(String _ts) {
         this._ts = _ts;
     }
 
     public String getId() { return id; }
+
     public void setId(String id) {
         this.id = id;
     }
+
     public String getHouseId() {
         return houseId;
+    }
+
+    public void setHouseId(String houseId) {
+        this.houseId = houseId;
     }
 
     public String getUserId() {
         return userId;
     }
 
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
     public String getQuestionContent() {
         return questionContent;
+    }
+
+    public void setQuestionContent(String questionContent) {
+        this.questionContent = questionContent;
     }
 
     public String getReplyContent() {
@@ -64,7 +80,7 @@ public class QuestionDAO {
     }
 
     public Question toQuestion(){
-        return new Question(houseId, userId, questionContent);
+        return new Question(userId, questionContent);
     }
 
     @Override

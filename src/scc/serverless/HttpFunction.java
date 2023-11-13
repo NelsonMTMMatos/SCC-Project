@@ -6,8 +6,14 @@ import com.microsoft.azure.functions.annotation.BindingName;
 import com.microsoft.azure.functions.annotation.FunctionName;
 import com.microsoft.azure.functions.annotation.HttpTrigger;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Response;
 import scc.cache.RedisCache;
+import scc.data.PeriodDAO;
+import scc.db.CosmosDBLayer;
+import scc.utils.Helpers;
 
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,6 +23,46 @@ import java.util.Optional;
  * Complete URL appear when deploying functions.
  */
 public class HttpFunction {
+
+
+	@FunctionName("http-discounted")
+	public HttpResponseMessage discountedPeriods(@HttpTrigger(name = "req",
+			methods = {HttpMethod.GET },
+			authLevel = AuthorizationLevel.ANONYMOUS,
+			route = "serverless/discountedPeriodsUntil/{date}")
+		 HttpRequestMessage<Optional<String>> request,
+		 @BindingName("date") String date,
+		 final ExecutionContext context) {
+
+		List<PeriodDAO> periods = CosmosDBLayer.getInstance()
+				.discountedPeriods(Helpers.toISO8601String(LocalDate.now().toString()), Helpers.toISO8601String(date))
+				.stream().toList();
+		return request.createResponseBuilder(HttpStatus.OK).body(periods).build();
+	}
+
+	@FunctionName("discounted-periods")
+	public HttpResponseMessage discountedPeriods(@HttpTrigger(name = "req",
+													 methods = {HttpMethod.GET},
+													 authLevel = AuthorizationLevel.ANONYMOUS,
+													 route = "serverless/discounted")
+					HttpRequestMessage<Optional<String>> request,
+					final ExecutionContext context) {
+		return request.createResponseBuilder(HttpStatus.OK).body("Ola").build();
+		/*
+		String dateParam = request.getQueryParameters().get("date");
+
+		if (dateParam != null) {
+			return request.createResponseBuilder(HttpStatus.OK).body("DateParam: " + dateParam).build();
+			/*List<PeriodDAO> periods = CosmosDBLayer.getInstance()
+					.discountedPeriods(Helpers.toISO8601String(LocalDate.now().toString()), Helpers.toISO8601String(dateParam))
+					.stream().toList();
+			//return request.createResponseBuilder(HttpStatus.OK).body(periods).build();
+		}
+
+		//return request.createResponseBuilder(HttpStatus.BAD_REQUEST).build();
+	*/
+	}
+
 	@FunctionName("http-info")
 	public HttpResponseMessage info(@HttpTrigger(name = "req", 
 										methods = {HttpMethod.GET }, 
@@ -126,8 +172,9 @@ public class HttpFunction {
 		try (Jedis jedis = RedisCache.getCachePool().getResource()) {
 			jedis.incr("cnt:http");
 		}
-		return request.createResponseBuilder(HttpStatus.OK).body(txt).build();
+		return request.createResponseBuilder(HttpStatus.OK).body(request).build();
 	}
+
 
 	@FunctionName("echo-simple")
 	public HttpResponseMessage echoSimple(@HttpTrigger(name = "req", 

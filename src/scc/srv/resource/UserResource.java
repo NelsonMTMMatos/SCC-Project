@@ -119,16 +119,16 @@ public class UserResource {
     @Path("/{"+ ID + "}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response updateUser(@CookieParam("scc:session") Cookie session, @PathParam(ID) String id, User user){
+    public Response updateUser(@PathParam(ID) String id, User user){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
 
-            Session s = Helpers.checkCookieUser(session, id);
+/*            Session s = Helpers.checkCookieUser(session, id);
 
             if(s == null)
                 return Response.status(Status.UNAUTHORIZED).build();
 
             if(!s.getUser().equals(user.getId()))
-                return Response.status(Status.FORBIDDEN).build();
+                return Response.status(Status.FORBIDDEN).build();*/
 
             UserDAO uDao = db.updateUser(new UserDAO(user)).getItem();
             jedis.set(String.format(USER_CACHE_ENTRY_FORMAT, id), new ObjectMapper().writeValueAsString(uDao));
@@ -172,7 +172,7 @@ public class UserResource {
     public Response getAllUsers(){
         return Response.ok(db.getUsers()
                 .stream()
-                .collect(Collectors.toList()))
+                .toList())
                 .build();
     }
 
@@ -191,7 +191,7 @@ public class UserResource {
             if(res != null)
                 return Response.ok(mapper.readValue(res, List.class)).build();
 
-            List<HouseDAO> houses = db.getHousesOfUser(id).stream().collect(Collectors.toList());
+            List<HouseDAO> houses = db.getHousesOfUser(id).stream().toList();
 
             jedis.set(housesInCache, mapper.writeValueAsString(houses));
 

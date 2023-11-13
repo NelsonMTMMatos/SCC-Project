@@ -39,6 +39,7 @@ public class PeriodResource {
             existentHouse(jedis, houseId, db);
 
             PeriodDAO newPeriod = new PeriodDAO(period);
+            newPeriod.setHouseId(houseId);
 
             db.createPeriod(newPeriod);
 
@@ -70,7 +71,7 @@ public class PeriodResource {
             if(res != null)
                 return Response.ok(mapper.readValue(res, List.class)).build();
 
-            List<PeriodDAO> periods = db.getHousePeriods(houseId).stream().collect(Collectors.toList());
+            List<PeriodDAO> periods = db.getHousePeriods(houseId).stream().toList();
 
             jedis.set(periodsInCache, mapper.writeValueAsString(periods));
             jedis.expire(periodsInCache, 30);

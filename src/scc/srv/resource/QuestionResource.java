@@ -42,6 +42,7 @@ public class QuestionResource {
             existentHouse(jedis, houseId, db);
 
             QuestionDAO newQuestion = new QuestionDAO(question);
+            newQuestion.setHouseId(houseId);
 
             newQuestion = db.createQuestion(newQuestion).getItem();
 
@@ -115,7 +116,7 @@ public class QuestionResource {
             if(res != null)
                 return Response.ok(mapper.readValue(res, List.class)).build();
 
-            List<QuestionDAO> questions = db.getHouseQuestions(houseId).stream().collect(Collectors.toList());
+            List<QuestionDAO> questions = db.getHouseQuestions(houseId).stream().toList();
 
             jedis.set(questionsInCache, mapper.writeValueAsString(questions));
             jedis.expire(questionsInCache, 30);

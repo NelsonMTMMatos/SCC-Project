@@ -19,9 +19,9 @@ public class RentalDAO {
 
     private String userId;
 
-    private String startDate;
-
     private String endDate;
+
+    private String startDate;
 
     private double price;
 

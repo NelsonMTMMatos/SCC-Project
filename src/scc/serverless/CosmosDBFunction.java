@@ -10,14 +10,13 @@ import scc.cache.RedisCache;
  * Azure Functions with Timer Trigger.
  */
 public class CosmosDBFunction {
-
     @FunctionName("cosmosDBtest")
     public void updateMostRecentUsers(@CosmosDBTrigger(name = "cosmosTest",
-    										databaseName = "scc24db60665",
+    										databaseName = "scc24db4204",
     										collectionName = "users",
-    										preferredLocations="West Europe",
+    										preferredLocations="North Europe",
     										createLeaseCollectionIfNotExists = true,
-    										connectionStringSetting = "AccountEndpoint=https://scc2460665.documents.azure.com:443/;AccountKey=R60ncQXbxnDD7gAoap4d4zQQUUlPRhPHgzyUFAHCMhZBkZnz8dfiYIa24m4pkv2mhtfbjmxG1ml5ACDbWnJ4OA==;")
+    										connectionStringSetting = "AzureCosmosDBConnection") 
         							String[] users,
         							final ExecutionContext context ) {
 		try (Jedis jedis = RedisCache.getCachePool().getResource()) {

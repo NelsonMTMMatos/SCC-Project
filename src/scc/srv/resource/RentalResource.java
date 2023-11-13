@@ -33,13 +33,13 @@ public class RentalResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createRental(@CookieParam("scc:session") Cookie session, @PathParam(HOUSE_ID) String houseId, Rental rental) {
+    public Response createRental(@PathParam(HOUSE_ID) String houseId, Rental rental) {
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-            Session s = Helpers.checkCookieUser(session, rental.getUserId());
+            /*Session s = Helpers.checkCookieUser(session, rental.getUserId());
 
             if(s == null)
-                return Response.status(Response.Status.UNAUTHORIZED).build();
+                return Response.status(Response.Status.UNAUTHORIZED).build();*/
 
             HouseDAO hDAO = existentHouse(jedis, houseId, db);
 

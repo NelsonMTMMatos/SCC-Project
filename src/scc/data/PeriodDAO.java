@@ -23,13 +23,12 @@ public class PeriodDAO {
     public PeriodDAO(){}
 
     public PeriodDAO(Period p){
-        this(p.getHouseId(), p.getDiscount(), p.getStartDate(), p.getEndDate());
+        this(p.getDiscount(), p.getStartDate(), p.getEndDate());
     }
 
-    public PeriodDAO(String houseId, int discount, String startDate, String endDate) {
+    public PeriodDAO(int discount, String startDate, String endDate) {
         super();
         this.id = UUID.randomUUID().toString();
-        this.houseId = houseId;
         this.discount = discount;
         this.startDate = Helpers.toISO8601String(startDate);
         this.endDate = Helpers.toISO8601String(endDate);
@@ -92,7 +91,7 @@ public class PeriodDAO {
     }
 
     public Period toPeriod(){
-        return new Period(houseId, discount, startDate, endDate);
+        return new Period(discount, startDate, endDate);
     }
 
     @Override
