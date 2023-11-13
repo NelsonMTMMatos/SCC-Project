@@ -32,7 +32,7 @@ public class UserResource {
 
     private final String ID = "id";
     private final String USER_CACHE_ENTRY_FORMAT = "user:%s";
-    private final String OWNER_CACHE_ENTRY_FORMAT = "user:%s:houses:";
+    private final String OWNER_CACHE_ENTRY_FORMAT = "user:%s:houses";
     private final CosmosDBLayer db;
     public UserResource(){
         db = CosmosDBLayer.getInstance();

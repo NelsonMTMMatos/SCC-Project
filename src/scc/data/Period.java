@@ -1,44 +1,29 @@
 package scc.data;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import scc.utils.Helpers;
 
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 public class Period {
 
-    private String id;
     private String houseId;
-    private double normalPrice;
-    private double discountedPrice;
+    private int discount;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate startDate;
+    private String startDate;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate endDate;
+    private String endDate;
 
     public Period(){}
 
-    public Period(String id, String houseId, double normalPrice, double discountedPrice, LocalDate startDate, LocalDate endDate) {
-        if (startDate.isAfter(endDate)) {
-            throw new IllegalArgumentException("Start date should be before or equal to end date.");
-        }
-        this.id = id;
+    public Period(String houseId, int discount, String startDate, String endDate) {
         this.houseId = houseId;
-        this.normalPrice = normalPrice;
-        this.discountedPrice = discountedPrice;
+        this.discount = discount;
         this.startDate = startDate;
         this.endDate = endDate;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public String getHouseId() {
@@ -49,49 +34,36 @@ public class Period {
         this.houseId = houseId;
     }
 
-    public double getNormalPrice() {
-        return normalPrice;
+    public int getDiscount() {
+        return discount;
     }
 
-    public void setNormalPrice(double normalPrice) {
-        this.normalPrice = normalPrice;
+    public void setDiscount(int discount) {
+        this.discount = discount;
     }
 
-    public double getDiscountedPrice() {
-        return discountedPrice;
-    }
-
-    public void setDiscountedPrice(double discountedPrice) {
-        this.discountedPrice = discountedPrice;
-    }
-
-    public LocalDate getStartDate() {
+    public String getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(LocalDate startDate) {
+    public void setStartDate(String startDate) {
         this.startDate = startDate;
     }
 
-    public LocalDate getEndDate() {
+    public String getEndDate() {
         return endDate;
     }
 
-    public void setEndDate(LocalDate endDate) {
+    public void setEndDate(String endDate) {
         this.endDate = endDate;
     }
 
-    public boolean intersects(Period other) {
-        return !this.startDate.isAfter(other.endDate) && !other.startDate.isAfter(this.endDate);
-    }
 
     @Override
     public String toString() {
         return "Period{" +
-                "id='" + id + '\'' +
-                ", houseId='" + houseId + '\'' +
-                ", normalPrice=" + normalPrice +
-                ", discountedPrice=" + discountedPrice +
+                " houseId='" + houseId + '\'' +
+                ", discount=" + discount +
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
                 '}';

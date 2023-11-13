@@ -1,8 +1,6 @@
 package scc.data;
 
 public class Question {
-
-    private String id;
     private String houseId;
     private String userId;
     private String questionContent;
@@ -16,9 +14,6 @@ public class Question {
         this.questionContent = questionContent;
     }
 
-    public String getId() {
-        return id;
-    }
     public String getHouseId() {
         return houseId;
     }
@@ -41,7 +36,7 @@ public class Question {
 
     @Override
     public String toString() {
-        return "Question [id=" + id + ", houseId='" + houseId  + ", userId='" + userId +
+        return "Question [houseId='" + houseId  + ", userId='" + userId +
                 ", questionContent='" + questionContent + ", replyContent='" + replyContent +
                 ']';
     }

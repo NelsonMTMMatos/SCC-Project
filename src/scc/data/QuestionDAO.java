@@ -1,5 +1,7 @@
 package scc.data;
 
+import java.util.UUID;
+
 public class QuestionDAO {
 
     private String _rid;
@@ -10,16 +12,15 @@ public class QuestionDAO {
     private String questionContent;
     private String replyContent;
 
-    public QuestionDAO(){
-    }
+    public QuestionDAO(){}
 
     public QuestionDAO(Question q){
-        this(q.getId(), q.getHouseId(), q.getUserId(), q.getQuestionContent());
+        this(q.getHouseId(), q.getUserId(), q.getQuestionContent());
     }
 
-    public QuestionDAO(String id, String houseId, String userId, String questionContent){
+    public QuestionDAO(String houseId, String userId, String questionContent){
         super();
-        this.id = id;
+        this.id = UUID.randomUUID().toString();
         this.houseId = houseId;
         this.userId = userId;
         this.questionContent = questionContent;

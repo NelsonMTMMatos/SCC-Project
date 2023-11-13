@@ -1,9 +1,8 @@
 package scc.data;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import scc.utils.Helpers;
 
-import java.time.LocalDate;
-import java.util.Arrays;
+import java.util.UUID;
 
 public class PeriodDAO {
 
@@ -15,45 +14,39 @@ public class PeriodDAO {
 
     private String houseId;
 
-    private double normalPrice;
+    private int discount;
 
-    private double discountedPrice;
+    private String startDate;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate startDate;
+    private String endDate;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate endDate;
+    public PeriodDAO(){}
 
-    public PeriodDAO(){
+    public PeriodDAO(Period p){
+        this(p.getHouseId(), p.getDiscount(), p.getStartDate(), p.getEndDate());
     }
 
-    public PeriodDAO(Period p, String id){
-        this(p.getId(), p.getHouseId(), p.getNormalPrice(), p.getDiscountedPrice(), p.getStartDate(), p.getEndDate());
-    }
-
-    public PeriodDAO(String id, String houseId, double normalPrice, double discountedPrice, LocalDate startDate, LocalDate endDate) {
+    public PeriodDAO(String houseId, int discount, String startDate, String endDate) {
         super();
-        if (startDate.isAfter(endDate)) {
-            throw new IllegalArgumentException("Start date should be before or equal to end date.");
-        }
-        this.id = id;
+        this.id = UUID.randomUUID().toString();
         this.houseId = houseId;
-        this.normalPrice = normalPrice;
-        this.discountedPrice = discountedPrice;
-        this.startDate = startDate;
-        this.endDate = endDate;
+        this.discount = discount;
+        this.startDate = Helpers.toISO8601String(startDate);
+        this.endDate = Helpers.toISO8601String(endDate);
     }
 
     public String get_rid() {
         return _rid;
     }
+
     public void set_rid(String _rid) {
         this._rid = _rid;
     }
+
     public String get_ts() {
         return _ts;
     }
+
     public void set_ts(String _ts) {
         this._ts = _ts;
     }
@@ -74,44 +67,32 @@ public class PeriodDAO {
         this.houseId = houseId;
     }
 
-    public double getNormalPrice() {
-        return normalPrice;
+    public int getDiscount() {
+        return discount;
     }
 
-    public void setNormalPrice(double normalPrice) {
-        this.normalPrice = normalPrice;
+    public void setDiscount(int discount) {
+        this.discount = discount;
     }
 
-    public double getDiscountedPrice() {
-        return discountedPrice;
-    }
-
-    public void setDiscountedPrice(double discountedPrice) {
-        this.discountedPrice = discountedPrice;
-    }
-
-    public LocalDate getStartDate() {
+    public String getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(LocalDate startDate) {
+    public void setStartDate(String startDate) {
         this.startDate = startDate;
     }
 
-    public LocalDate getEndDate() {
+    public String getEndDate() {
         return endDate;
     }
 
-    public void setEndDate(LocalDate endDate) {
+    public void setEndDate(String endDate) {
         this.endDate = endDate;
     }
 
-    public boolean intersects(PeriodDAO other) {
-        return !this.startDate.isAfter(other.endDate) && !other.startDate.isAfter(this.endDate);
-    }
-
     public Period toPeriod(){
-        return new Period(id, houseId, normalPrice, discountedPrice, startDate, endDate);
+        return new Period(houseId, discount, startDate, endDate);
     }
 
     @Override
@@ -119,8 +100,7 @@ public class PeriodDAO {
         return "Period{" +
                 "id='" + id + '\'' +
                 ", houseId='" + houseId + '\'' +
-                ", normalPrice=" + normalPrice +
-                ", discountedPrice=" + discountedPrice +
+                ", discount=" + discount +
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
                 '}';
