@@ -17,10 +17,8 @@ import java.util.stream.Collectors;
 import static scc.srv.resource.HouseResource.HOUSE_ID;
 import static scc.srv.resource.HouseResource.existentHouse;
 
-@Path("/houses/{houseId}/periods")
+@Path("/houses/{" + HOUSE_ID + "}/periods")
 public class PeriodResource {
-
-    private final String PERIOD_ID = "periodId";
 
     private final String PERIOD_CACHE_ENTRY_FORMAT = "period:%s";
 

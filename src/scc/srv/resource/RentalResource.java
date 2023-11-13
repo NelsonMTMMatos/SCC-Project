@@ -20,7 +20,7 @@ import java.util.NoSuchElementException;
 import static scc.srv.resource.HouseResource.HOUSE_ID;
 import static scc.srv.resource.HouseResource.existentHouse;
 
-@Path("/houses/{houseId}/rentals")
+@Path("/houses/{" + HOUSE_ID + "}/rentals")
 public class RentalResource {
     private final String RENTAL_ID = "rentalId";
     private final String RENTAL_CACHE_ENTRY_FORMAT = "rental:%s";

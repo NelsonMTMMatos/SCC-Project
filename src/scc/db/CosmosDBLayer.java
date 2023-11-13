@@ -192,53 +192,38 @@ public class CosmosDBLayer {
 		return houses.queryItems(query, new CosmosQueryRequestOptions(), HouseDAO.class);
 	}
 
-	public Response getHousesByPeriodAndLocation(String startDate, String endDate, String location){
+	public List<HouseDAO> getHousesByPeriodAndLocation(String startDate, String endDate, String location){
 		init();
 		String end = Helpers.toISO8601String(endDate);
 		String start = Helpers.toISO8601String(startDate);
-		String periodQuery = String.format("SELECT DISTINCT periods.houseId FROM periods " +
-				"WHERE periods.startDate <= '%s' AND periods.endDate >= '%s'",
-				end, start);
+		String housesQuery = String.format("SELECT * FROM houses WHERE houses.location = '%s'", location);
 
-		CosmosPagedIterable<String> houseIds = periods.queryItems(periodQuery, new CosmosQueryRequestOptions(), String.class);
+		CosmosPagedIterable<HouseDAO> houses = this.houses.queryItems(housesQuery, new CosmosQueryRequestOptions(), HouseDAO.class);
+
 		List<HouseDAO> availableHouses = new ArrayList<>();
+		for (HouseDAO hDAO : houses) {
+			String periodQuery =
+					String.format("SELECT * FROM periods " +
+									"WHERE periods.startDate <= '%s' " +
+									"AND periods.endDate >= '%s' " +
+									"AND periods.houseId = '%s'",
+					start, end, hDAO.getId());
 
-
-		return Response.ok(houseIds.stream().collect(Collectors.toList()).get(0)).build();
-		/*for (String houseId : houseIds) {
-			String houseQuery = String.format("SELECT * FROM houses WHERE houses.id='%s' AND houses.location='%s'", houseId, location);
-			return Response.ok("First house: " + houseId + "\n Query: " + houseQuery).build();
-			*//*
-			CosmosPagedIterable<HouseDAO> hs = houses.queryItems(houseQuery, new CosmosQueryRequestOptions(), HouseDAO.class);
-
-			for (HouseDAO house : hs) {
-				availableHouses.add(house);
-			}
-			*//*
+			if(periods.queryItems(periodQuery, new CosmosQueryRequestOptions(), PeriodDAO.class).iterator().hasNext())
+				availableHouses.add(hDAO);
 		}
-		return Response.ok("No houses").build();*/
-		//return Response.ok(availableHouses).build();
+
+		return availableHouses;
 	}
 
+	public CosmosPagedIterable<PeriodDAO> discountedPeriods(String startDate, String endDate){
+		init();
+		String periodQuery = String.format("SELECT * FROM periods " +
+						"WHERE periods.startDate >= '%s' AND periods.endDate <= '%s' AND periods.discount > 0",
+				startDate, endDate);
 
-
-  /*
-  	String housesQuery = String.format("SELECT * FROM houses WHERE houses.location = %s')", location);
-  	CosmosPagedIterable<HouseDao> houses= houses.queryItems(housesQuery, new CosmosQueryRequestOptions(), String.class);
-
-  	List<HouseDAO> availableHouses = new ArrayList<>();
-	for (HouseDAO hDAO : houses) {
-		String periodQuery = String.format("SELECT DISTINCT periods.house_id FROM periods " +
-				"WHERE periods.start_date <= '%s' AND periods.end_date >= '%s') AND periods.house_id = '%s'"
-				, endDate, startDate, location);
-
-		boolean condition =
-				this.houses.queryItems(houseQuery, new CosmosQueryRequestOptions(), HouseDAO.class).iterator().hasNext();
-
-		if(condition)
-			availableHouses.add(hDAO);
+		return periods.queryItems(periodQuery, new CosmosQueryRequestOptions(), PeriodDAO.class);
 	}
-   */
 
 
 	public CosmosItemResponse<QuestionDAO> createQuestion(QuestionDAO question){
@@ -300,8 +285,12 @@ public class CosmosDBLayer {
 		return periods.queryItems(periodsQuery, new CosmosQueryRequestOptions(), PeriodDAO.class);
 	}
 
-	//Ancillary methods
+	public void close() {
+		client.close();
+	}
 
+
+	//Ancillary methods
 	private CosmosPagedIterable<PeriodDAO> getIntersectingPeriods(String houseId, String startDate, String endDate){
 		init();
 
@@ -357,32 +346,5 @@ public class CosmosDBLayer {
 
 		return discount;
 
-	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	public void close() {
-		client.close();
 	}
 }

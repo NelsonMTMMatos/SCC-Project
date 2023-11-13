@@ -10,7 +10,9 @@ import redis.clients.jedis.Jedis;
 import scc.cache.RedisCache;
 import scc.data.House;
 import scc.data.HouseDAO;
+import scc.data.PeriodDAO;
 import scc.db.CosmosDBLayer;
+import scc.utils.Helpers;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,9 +24,9 @@ public class HouseResource {
 
     private final String LOCATION = "location";
 
-    private final String START_DATE = "startDate";
+    protected static final String START_DATE = "startDate";
 
-    private final String END_DATE = "endDate";
+    protected static final String END_DATE = "endDate";
 
     protected static final String HOUSE_CACHE_ENTRY_FORMAT = "house:%s";
 
@@ -32,6 +34,7 @@ public class HouseResource {
 
     private final String HOUSES_BY_LOCATION_AND_PERIOD_CACHE_ENTRY_FORMAT = "location:%s:startDate:%s:endDate:%s:houses";
 
+    private final String DISCOUNTED_PERIODS_CACHE_ENTRY_FORMAT = "startDate:%s:endDate:%s:discounted_periods";
     private final CosmosDBLayer db;
 
     public HouseResource(){
@@ -137,7 +140,6 @@ public class HouseResource {
     public Response availableHousesByFilter(@QueryParam(LOCATION) String location,
                                             @QueryParam(START_DATE) String startDate,
                                             @QueryParam(END_DATE) String endDate) {
-
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
             ObjectMapper mapper = new ObjectMapper();
@@ -148,25 +150,25 @@ public class HouseResource {
             if (location != null){
                 if (startDate != null && endDate != null) {
 
-
-                    /*idInCache = String.format(HOUSES_BY_LOCATION_AND_PERIOD_CACHE_ENTRY_FORMAT, location, startDate, endDate);
+                    idInCache = String.format(HOUSES_BY_LOCATION_AND_PERIOD_CACHE_ENTRY_FORMAT, location, startDate, endDate);
                     res = jedis.get(idInCache);
                     if(res != null)
-                        return Response.ok(mapper.readValue(res, List.class)).build();*/
+                        return Response.ok(mapper.readValue(res, List.class)).build();
 
-                    return db.getHousesByPeriodAndLocation(startDate, endDate, location);
+                    availableHouses = db.getHousesByPeriodAndLocation(startDate, endDate, location);
 
                 }else {
-                    /*idInCache = String.format(HOUSES_BY_LOCATION_CACHE_ENTRY_FORMAT, location);
+
+                    idInCache = String.format(HOUSES_BY_LOCATION_CACHE_ENTRY_FORMAT, location);
                     res = jedis.get(idInCache);
                     if(res != null)
-                        return Response.ok(mapper.readValue(res, List.class)).build();*/
+                        return Response.ok(mapper.readValue(res, List.class)).build();
                     availableHouses = db.getHousesByLocation(location).stream().collect(Collectors.toList());
                 }
             }
 
             if (availableHouses != null){
-               // jedis.set(idInCache, mapper.writeValueAsString(availableHouses));
+                jedis.set(idInCache, mapper.writeValueAsString(availableHouses));
                 return Response.ok(availableHouses).build();
             }
 
@@ -180,8 +182,28 @@ public class HouseResource {
     @GET
     @Path("/discounted")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response discountedRentals(@QueryParam(START_DATE) String startDate, @QueryParam(END_DATE) String endDate){
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+    public Response discountedPeriods(@QueryParam(START_DATE) String startDate, @QueryParam(END_DATE) String endDate){
+        try(Jedis jedis = RedisCache.getCachePool().getResource()){
+            String start = Helpers.toISO8601String(startDate);
+            String end = Helpers.toISO8601String(endDate);
+
+            String periodsInCache = String.format(DISCOUNTED_PERIODS_CACHE_ENTRY_FORMAT, start, end);
+            String res = jedis.get(periodsInCache);
+            ObjectMapper mapper = new ObjectMapper();
+
+            if(res != null)
+                return Response.ok(mapper.readValue(res, List.class)).build();
+
+            List<PeriodDAO> periods = db.discountedPeriods(start, end).stream().collect(Collectors.toList());
+
+            jedis.set(periodsInCache, mapper.writeValueAsString(periods));
+            jedis.expire(periodsInCache, 30);
+            return Response.ok(periods).build();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return Response.serverError().build();
     }
 
     protected static HouseDAO existentHouse(Jedis jedis, String id, CosmosDBLayer db) throws JsonProcessingException {
@@ -190,6 +212,4 @@ public class HouseResource {
 
         return res != null ? new ObjectMapper().readValue(res, HouseDAO.class) : db.getHouseById(id).getItem();
     }
-
-
 }

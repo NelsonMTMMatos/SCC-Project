@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 import static scc.srv.resource.HouseResource.existentHouse;
 import static scc.srv.resource.HouseResource.HOUSE_ID;
 
-@Path("/houses/{houseId}/questions")
+@Path("/houses/{" + HOUSE_ID + "}/questions")
 public class QuestionResource {
 
     private final String QUESTION_ID = "questionId";
