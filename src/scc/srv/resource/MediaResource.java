@@ -4,21 +4,10 @@ import com.azure.core.util.BinaryData;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobContainerClientBuilder;
-import com.azure.storage.blob.models.BlobItem;
-import scc.utils.Hash;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
-
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import scc.utils.Hash;
 
 /**
  * Resource for managing media files, such as images.
@@ -26,7 +15,7 @@ import jakarta.ws.rs.core.MediaType;
 @Path("/media")
 public class MediaResource
 {
-	String storageConnectionString = System.getenv("BlobStoreConnection");
+	public final String storageConnectionString = System.getenv("BlobStoreConnection");
 
 	BlobContainerClient containerClient;
 
@@ -42,19 +31,17 @@ public class MediaResource
 	@POST
 	@Consumes(MediaType.APPLICATION_OCTET_STREAM)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String upload(byte[] contents) {
+	public Response upload(byte[] contents) {
 		String filename = Hash.of(contents) + ".jpg";
 		try{
 			BlobClient blob = containerClient.getBlobClient(filename);
 
 			blob.upload(BinaryData.fromBytes(contents));
-
-			System.out.println( "File uploaded : " + filename);
 		}catch( Exception e) {
 			e.printStackTrace();
 		}
 
-		return filename;
+		return Response.ok(filename).build();
 	}
 
 	/**
@@ -75,16 +62,6 @@ public class MediaResource
 			e.printStackTrace();
 		}
 		return null;
-	}
-
-	/**
-	 * Lists the ids of images stored.
-	 */
-	@GET
-	@Path("/list")
-	@Produces(MediaType.APPLICATION_JSON)
-	public List<String> list() {
-		return containerClient.listBlobs().stream().map((BlobItem::getName)).collect(Collectors.toList());
 	}
 
 }

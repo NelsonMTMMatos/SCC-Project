@@ -1,10 +1,5 @@
 package scc.data;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-
-import java.time.LocalDate;
-import java.time.Period;
-import java.util.Arrays;
 import java.util.UUID;
 
 public class RentalDAO {
@@ -19,9 +14,9 @@ public class RentalDAO {
 
     private String userId;
 
-    private String startDate;
-
     private String endDate;
+
+    private String startDate;
 
     private double price;
 

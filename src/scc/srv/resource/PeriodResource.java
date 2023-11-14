@@ -3,24 +3,25 @@ package scc.srv.resource;
 import com.azure.cosmos.CosmosException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import redis.clients.jedis.Jedis;
 import scc.cache.RedisCache;
+import scc.data.HouseDAO;
 import scc.data.Period;
 import scc.data.PeriodDAO;
 import scc.db.CosmosDBLayer;
+import scc.utils.Helpers;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static scc.srv.resource.HouseResource.HOUSE_ID;
 import static scc.srv.resource.HouseResource.existentHouse;
 
 @Path("/houses/{" + HOUSE_ID + "}/periods")
 public class PeriodResource {
-
-    private final String PERIOD_CACHE_ENTRY_FORMAT = "period:%s";
 
     private final String HOUSE_PERIODS_CACHE_ENTRY_FORMAT = "house:%s:periods";
 
@@ -33,17 +34,18 @@ public class PeriodResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addPeriod(@PathParam(HOUSE_ID) String houseId, Period period){
+    public Response addPeriod(@CookieParam("scc:session") Cookie session, @PathParam(HOUSE_ID) String houseId, Period period){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
 
-            existentHouse(jedis, houseId, db);
+            HouseDAO hDAO = existentHouse(jedis, houseId, db);
+
+            if(Helpers.checkCookieUser(session, hDAO.getOwnerId()) == null && Helpers.AUTH_ON)
+                return Response.status(Status.UNAUTHORIZED).build();
 
             PeriodDAO newPeriod = new PeriodDAO(period);
+            newPeriod.setHouseId(houseId);
 
             db.createPeriod(newPeriod);
-
-            String periodIdInCache = String.format(PERIOD_CACHE_ENTRY_FORMAT, newPeriod.getId());
-            jedis.set(periodIdInCache, new ObjectMapper().writeValueAsString(newPeriod));
 
             return Response.ok(newPeriod.getId()).build();
 
@@ -70,16 +72,15 @@ public class PeriodResource {
             if(res != null)
                 return Response.ok(mapper.readValue(res, List.class)).build();
 
-            List<PeriodDAO> periods = db.getHousePeriods(houseId).stream().collect(Collectors.toList());
+            List<PeriodDAO> periods = db.getHousePeriods(houseId).stream().toList();
 
             jedis.set(periodsInCache, mapper.writeValueAsString(periods));
-            jedis.expire(periodsInCache, 30);
+            jedis.expire(periodsInCache, 90);
 
             return Response.ok(periods).build();
-
         } catch (CosmosException e) {
             if (e.getStatusCode() == 404)
-                return Response.status(Response.Status.NOT_FOUND).build();
+                return Response.status(Status.NOT_FOUND).build();
         }catch (Exception e){
             e.printStackTrace();
         }

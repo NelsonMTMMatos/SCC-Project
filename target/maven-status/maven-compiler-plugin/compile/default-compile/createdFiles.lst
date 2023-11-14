@@ -21,11 +21,10 @@ scc\srv\resource\MediaResource.class
 scc\data\Rental.class
 scc\utils\Hash.class
 scc\utils\TestCache.class
+scc\db\CosmosDBLayerAsync.class
 scc\serverless\HttpFunction.class
-scc\serverless\BlobStoreFunction.class
 scc\data\QuestionDAO.class
 scc\data\UserDAO.class
-scc\serverless\TimerFunction.class
 scc\srv\resource\ControlResource.class
 scc\data\House.class
 scc\data\HouseDAO.class

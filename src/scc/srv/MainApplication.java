@@ -1,10 +1,10 @@
 package scc.srv;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import jakarta.ws.rs.core.Application;
 import scc.srv.resource.*;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class MainApplication extends Application
 {

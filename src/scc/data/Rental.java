@@ -1,10 +1,6 @@
 package scc.data;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import scc.utils.Helpers;
-
-import java.time.LocalDate;
-import java.time.Period;
 
 public class Rental {
 
