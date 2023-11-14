@@ -17,9 +17,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 public class CosmosDBLayer {
-	private static final String CONNECTION_URL = System.getenv("COSMOSDB_URL");
-	private static final String DB_KEY = System.getenv("COSMOSDB_KEY");
-	private static final String DB_NAME = System.getenv("COSMOSDB_DATABASE");
+	public static final String CONNECTION_URL = System.getenv("COSMOSDB_URL");
+	public static final String DB_KEY = System.getenv("COSMOSDB_KEY");
+	public static final String DB_NAME = System.getenv("COSMOSDB_DATABASE");
 
 	private static CosmosDBLayer instance;
 
@@ -94,6 +94,12 @@ public class CosmosDBLayer {
 		init();
 		String query = String.format("SELECT * FROM houses WHERE houses.ownerId='%s'", id);
 		return houses.queryItems(query, new CosmosQueryRequestOptions(), HouseDAO.class);
+	}
+
+	public CosmosPagedIterable<RentalDAO> getRentalsOfUser(String id){
+		init();
+		String query = String.format("SELECT * FROM rentals WHERE rentals.userId='%s'", id);
+		return rentals.queryItems(query, new CosmosQueryRequestOptions(), RentalDAO.class);
 	}
 
 
@@ -210,14 +216,14 @@ public class CosmosDBLayer {
 		return availableHouses;
 	}
 
-	public CosmosPagedIterable<PeriodDAO> discountedPeriods(String startDate, String endDate){
+	/*public CosmosPagedIterable<PeriodDAO> discountedPeriods(String startDate, String endDate){
 		init();
 		String periodQuery = String.format("SELECT * FROM periods " +
 						"WHERE periods.startDate >= '%s' AND periods.endDate <= '%s' AND periods.discount > 0",
 				startDate, endDate);
 
 		return periods.queryItems(periodQuery, new CosmosQueryRequestOptions(), PeriodDAO.class);
-	}
+	}*/
 
 
 	public CosmosItemResponse<QuestionDAO> createQuestion(QuestionDAO question){

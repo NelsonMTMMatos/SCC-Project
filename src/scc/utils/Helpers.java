@@ -1,20 +1,17 @@
 package scc.utils;
 
-import com.azure.cosmos.util.CosmosPagedIterable;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.core.Cookie;
 import org.mindrot.jbcrypt.BCrypt;
 import scc.authentication.Session;
 import scc.cache.CacheException;
 import scc.cache.RedisCache;
 
-import javax.swing.text.DateFormatter;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Iterator;
 
 public class Helpers {
+
+    public static final boolean AUTH_ON = false;
 
     private Helpers(){}
 
@@ -33,13 +30,13 @@ public class Helpers {
         }
         if (s == null || s.getUser() == null || s.getUser().isEmpty())
             return null;
-        if (!s.getUser().equals(id) && !s.getUser().equals("admin"))
+        if (!s.getUser().equals(id))
             return null;
         return s;
     }
 
     public static String toISO8601String(String date){
         return LocalDate.parse(date, DateTimeFormatter.ISO_DATE).toString();
-        //return String.format("%sT00:00:00.0000000", date);
     }
+
 }

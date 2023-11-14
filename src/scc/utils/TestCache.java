@@ -1,13 +1,12 @@
 package scc.utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import redis.clients.jedis.Jedis;
+import scc.cache.RedisCache;
+import scc.data.UserDAO;
+
 import java.util.List;
 import java.util.Locale;
-
-import redis.clients.jedis.Jedis;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import scc.cache.RedisCache;
-import scc.data.User;
-import scc.data.UserDAO;
 
 /**
  * Standalone program for accessing the database

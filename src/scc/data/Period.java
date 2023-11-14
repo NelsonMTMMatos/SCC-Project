@@ -1,13 +1,5 @@
 package scc.data;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import scc.utils.Helpers;
-
-import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-
 public class Period {
 
     private int discount;

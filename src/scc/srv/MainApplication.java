@@ -1,11 +1,10 @@
 package scc.srv;
 
+import jakarta.ws.rs.core.Application;
+import scc.srv.resource.*;
+
 import java.util.HashSet;
 import java.util.Set;
-
-import jakarta.ws.rs.core.Application;
-import scc.serverless.HttpFunction;
-import scc.srv.resource.*;
 
 public class MainApplication extends Application
 {

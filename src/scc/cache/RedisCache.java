@@ -6,13 +6,12 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import scc.authentication.Session;
-import scc.utils.Helpers;
 
 public class RedisCache {
 	private static final String RedisHostname = System.getenv("REDIS_URL");
 	private static final String RedisKey = System.getenv("REDIS_KEY");
 
-	private static final String SESSION_CACHE_ENTRY_FORMAT = "session:%s";
+	public static final String SESSION_CACHE_ENTRY_FORMAT = "session:%s";
 	
 	private static JedisPool instance;
 	
@@ -46,11 +45,11 @@ public class RedisCache {
 
 			String res = jedis.get(String.format(SESSION_CACHE_ENTRY_FORMAT, uid));
 
-			if(res == null) throw new CacheException("No entry found.");
+			if(res == null) return null;
 
 			return new ObjectMapper().readValue(res, Session.class);
 		} catch (JsonProcessingException e) {
-			throw new RuntimeException(e);
+			return null;
 		}
 	}
 }
