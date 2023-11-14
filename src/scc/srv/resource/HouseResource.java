@@ -46,24 +46,23 @@ public class HouseResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response createHouse(@CookieParam("scc:session") Cookie session, House house){
 
-        if(Helpers.checkCookieUser(session, house.getOwnerId()) == null)
+        if(Helpers.checkCookieUser(session, house.getOwnerId()) == null && Helpers.AUTH_ON)
             return Response.status(Status.UNAUTHORIZED).build();
 
         HouseDAO hDAO = new HouseDAO(house);
         db.createHouse(hDAO);
 
-        return Response.ok(hDAO.getId()).build();
+        return Response.ok(hDAO).build();
     }
 
     @DELETE
     @Path("/{"+ HOUSE_ID + "}")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response deleteHouse(@CookieParam("scc:session") Cookie session, @PathParam(HOUSE_ID) String id){
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
             HouseDAO hDAO = existentHouse(jedis, id, db);
 
-            if(Helpers.checkCookieUser(session, hDAO.getOwnerId()) == null)
+            if(Helpers.checkCookieUser(session, hDAO.getOwnerId()) == null && Helpers.AUTH_ON)
                 return Response.status(Status.UNAUTHORIZED).build();
 
             jedis.del(String.format(HOUSE_CACHE_ENTRY_FORMAT, id));
@@ -84,24 +83,23 @@ public class HouseResource {
     @PUT
     @Path("/{"+ HOUSE_ID + "}")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response updateHouse(@CookieParam("scc:session") Cookie session, @PathParam(HOUSE_ID) String id, House house){
 
-            if(Helpers.checkCookieUser(session, house.getOwnerId()) == null)
+            if(Helpers.checkCookieUser(session, house.getOwnerId()) == null && Helpers.AUTH_ON)
                 return Response.status(Status.UNAUTHORIZED).build();
 
             HouseDAO hDAO = new HouseDAO(house);
             hDAO.setId(id);
 
             try{
-                hDAO = db.updateHouse(hDAO).getItem();
+                db.updateHouse(hDAO);
             }
              catch (CosmosException e) {
                 if (e.getStatusCode() == 404)
                     return Response.status(Status.NOT_FOUND).build();
             }
 
-            return Response.ok(hDAO.toHouse()).build();
+            return Response.ok().build();
     }
 
     @GET
@@ -171,33 +169,6 @@ public class HouseResource {
         return Response.status(Status.BAD_REQUEST).build();
     }
 
-    /*@GET
-    @Path("/discounted")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response discountedPeriods(@QueryParam(START_DATE) String startDate, @QueryParam(END_DATE) String endDate){
-        try(Jedis jedis = RedisCache.getCachePool().getResource()){
-            String start = Helpers.toISO8601String(startDate);
-            String end = Helpers.toISO8601String(endDate);
-
-            String periodsInCache = String.format(DISCOUNTED_PERIODS_CACHE_ENTRY_FORMAT, start, end);
-            String res = jedis.get(periodsInCache);
-            ObjectMapper mapper = new ObjectMapper();
-
-            if(res != null)
-                return Response.ok(mapper.readValue(res, List.class)).build();
-
-            List<PeriodDAO> periods = db.discountedPeriods(start, end).stream().toList();
-
-            jedis.set(periodsInCache, mapper.writeValueAsString(periods));
-            jedis.expire(periodsInCache, 60);
-            return Response.ok(periods).build();
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-
-        return Response.serverError().build();
-    }
-*/
     protected static HouseDAO existentHouse(Jedis jedis, String id, CosmosDBLayer db) throws JsonProcessingException {
         String houseIdInCache = String.format(HOUSE_CACHE_ENTRY_FORMAT, id);
         String res = jedis.get(houseIdInCache);

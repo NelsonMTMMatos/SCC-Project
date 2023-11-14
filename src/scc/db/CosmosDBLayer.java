@@ -168,11 +168,9 @@ public class CosmosDBLayer {
 					LocalDate.parse(rental.getEndDate())).getDays() + 1;
 
 			rental.setPrice(rental.getPrice() * days * (1 - newPeriodDiscount * 0.01));
-
 		} catch (NoSuchElementException e) {
 			this.splitPeriods(oldRental.getHouseId(), oldRental.getStartDate(), oldRental.getEndDate(), oldPeriod);
 			throw new NotAuthorizedException(e);
-
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -184,6 +182,18 @@ public class CosmosDBLayer {
 		init();
 		PartitionKey key = new PartitionKey(id);
 		return rentals.readItem(id, key, RentalDAO.class);
+	}
+
+	public boolean hasIntersectingRentals(String houseId, String startDate, String endDate){
+		init();
+
+		String query = String.format("SELECT * FROM rentals \n" +
+						"WHERE rentals.houseId = '%s' \n" +
+						"AND rentals.startDate <= '%s' \n" +
+						"AND rentals.endDate >= '%s'",
+				houseId, endDate, startDate);
+		return rentals.queryItems(query, new CosmosQueryRequestOptions(), RentalDAO.class).iterator().hasNext();
+
 	}
 
 	public CosmosPagedIterable<HouseDAO> getHousesByLocation(String location) {
@@ -215,16 +225,6 @@ public class CosmosDBLayer {
 
 		return availableHouses;
 	}
-
-	/*public CosmosPagedIterable<PeriodDAO> discountedPeriods(String startDate, String endDate){
-		init();
-		String periodQuery = String.format("SELECT * FROM periods " +
-						"WHERE periods.startDate >= '%s' AND periods.endDate <= '%s' AND periods.discount > 0",
-				startDate, endDate);
-
-		return periods.queryItems(periodQuery, new CosmosQueryRequestOptions(), PeriodDAO.class);
-	}*/
-
 
 	public CosmosItemResponse<QuestionDAO> createQuestion(QuestionDAO question){
 		init();
@@ -285,12 +285,17 @@ public class CosmosDBLayer {
 		return periods.queryItems(periodsQuery, new CosmosQueryRequestOptions(), PeriodDAO.class);
 	}
 
+
+
 	public void close() {
 		client.close();
 	}
 
 
+
+
 	//Ancillary methods
+
 	private CosmosPagedIterable<PeriodDAO> getIntersectingPeriods(String houseId, String startDate, String endDate){
 		init();
 

@@ -49,7 +49,7 @@ public class RentalResource {
 
             rDAO = db.createRental(rDAO).getItem();
 
-            return Response.ok(rDAO.getId()).build();
+            return Response.ok(rDAO).build();
         } catch (CosmosException e) {
             if (e.getStatusCode() == 404)
                 return Response.status(Status.NOT_FOUND).build();
@@ -66,7 +66,6 @@ public class RentalResource {
     @PUT
     @Path("/{" + RENTAL_ID + "}")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response updateRental(@CookieParam("scc:session") Cookie session, @PathParam(HOUSE_ID) String houseId, @PathParam(RENTAL_ID) String rentalId, Rental rental) {
 
         if(Helpers.checkCookieUser(session, rental.getUserId()) == null && Helpers.AUTH_ON)
@@ -82,9 +81,9 @@ public class RentalResource {
             rDAO.setHouseId(houseId);
             rDAO.setPrice(hDAO.getPrice());
 
-            rDAO = db.updateRental(rDAO).getItem();
+            db.updateRental(rDAO);
 
-            return Response.ok(rDAO.toRental()).build();
+            return Response.ok().build();
 
         } catch (CosmosException e) {
             if (e.getStatusCode() == 404) {

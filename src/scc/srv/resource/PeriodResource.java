@@ -42,18 +42,22 @@ public class PeriodResource {
             if(Helpers.checkCookieUser(session, hDAO.getOwnerId()) == null && Helpers.AUTH_ON)
                 return Response.status(Status.UNAUTHORIZED).build();
 
+            if(db.hasIntersectingRentals(houseId, period.getStartDate(), period.getEndDate()))
+                return Response.status(Status.FORBIDDEN.getStatusCode(),
+                        "Period intersects with other reservations").build();
+
             PeriodDAO newPeriod = new PeriodDAO(period);
             newPeriod.setHouseId(houseId);
 
             db.createPeriod(newPeriod);
 
-            return Response.ok(newPeriod.getId()).build();
-
+            return Response.ok(newPeriod).build();
         } catch (CosmosException e) {
             if (e.getStatusCode() == 404)
                 return Response.status(Response.Status.NOT_FOUND).build();
         }catch (Exception e) {
-            return Response.status(401, "Period intersects with others of same price").build();
+            return Response.status(Status.UNAUTHORIZED.getStatusCode(),
+                    "Period intersects with others of same price").build();
         }
 
         return Response.serverError().build();
