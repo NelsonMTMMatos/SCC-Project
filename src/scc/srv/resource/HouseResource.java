@@ -169,33 +169,6 @@ public class HouseResource {
         return Response.status(Status.BAD_REQUEST).build();
     }
 
-    /*@GET
-    @Path("/discounted")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response discountedPeriods(@QueryParam(START_DATE) String startDate, @QueryParam(END_DATE) String endDate){
-        try(Jedis jedis = RedisCache.getCachePool().getResource()){
-            String start = Helpers.toISO8601String(startDate);
-            String end = Helpers.toISO8601String(endDate);
-
-            String periodsInCache = String.format(DISCOUNTED_PERIODS_CACHE_ENTRY_FORMAT, start, end);
-            String res = jedis.get(periodsInCache);
-            ObjectMapper mapper = new ObjectMapper();
-
-            if(res != null)
-                return Response.ok(mapper.readValue(res, List.class)).build();
-
-            List<PeriodDAO> periods = db.discountedPeriods(start, end).stream().toList();
-
-            jedis.set(periodsInCache, mapper.writeValueAsString(periods));
-            jedis.expire(periodsInCache, 60);
-            return Response.ok(periods).build();
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-
-        return Response.serverError().build();
-    }
-*/
     protected static HouseDAO existentHouse(Jedis jedis, String id, CosmosDBLayer db) throws JsonProcessingException {
         String houseIdInCache = String.format(HOUSE_CACHE_ENTRY_FORMAT, id);
         String res = jedis.get(houseIdInCache);

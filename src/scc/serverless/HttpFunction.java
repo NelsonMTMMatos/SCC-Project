@@ -5,6 +5,9 @@ import com.microsoft.azure.functions.annotation.AuthorizationLevel;
 import com.microsoft.azure.functions.annotation.CosmosDBInput;
 import com.microsoft.azure.functions.annotation.FunctionName;
 import com.microsoft.azure.functions.annotation.HttpTrigger;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Response;
+import scc.cache.RedisCache;
 import scc.data.PeriodDAO;
 
 import java.time.LocalDate;
@@ -55,7 +58,4 @@ public class HttpFunction {
 
 			return request.createResponseBuilder(HttpStatus.OK).body(filteredPeriods).build();
 	}
-
-
-
 }

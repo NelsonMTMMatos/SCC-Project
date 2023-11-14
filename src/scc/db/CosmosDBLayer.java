@@ -168,11 +168,9 @@ public class CosmosDBLayer {
 					LocalDate.parse(rental.getEndDate())).getDays() + 1;
 
 			rental.setPrice(rental.getPrice() * days * (1 - newPeriodDiscount * 0.01));
-
 		} catch (NoSuchElementException e) {
 			this.splitPeriods(oldRental.getHouseId(), oldRental.getStartDate(), oldRental.getEndDate(), oldPeriod);
 			throw new NotAuthorizedException(e);
-
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -227,16 +225,6 @@ public class CosmosDBLayer {
 
 		return availableHouses;
 	}
-
-	/*public CosmosPagedIterable<PeriodDAO> discountedPeriods(String startDate, String endDate){
-		init();
-		String periodQuery = String.format("SELECT * FROM periods " +
-						"WHERE periods.startDate >= '%s' AND periods.endDate <= '%s' AND periods.discount > 0",
-				startDate, endDate);
-
-		return periods.queryItems(periodQuery, new CosmosQueryRequestOptions(), PeriodDAO.class);
-	}*/
-
 
 	public CosmosItemResponse<QuestionDAO> createQuestion(QuestionDAO question){
 		init();
