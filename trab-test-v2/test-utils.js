@@ -8,6 +8,7 @@ module.exports = {
   genNewUser,
   genNewUserReply,
   genNewHouse,
+  genNewPeriod,
   selectUser,
   selectUserSkewed,
   decideNextAction,
@@ -27,6 +28,10 @@ const fs = require('fs')
 var imagesIds = []
 var images = []
 var users = []
+var houses = []
+var periods = []
+var questions = []
+var rentals = []
 const locations = ["Lisbon","Porto","Madeira","Azores","Algarve","Braga","Coimbra","Evora","Aveiro","Leiria"]
 
 // Auxiliary function to select an element from an array
@@ -159,9 +164,16 @@ function genNewHouse(context, events, done) {
 	context.vars.name = `${faker.lorem.words({ min: 1, max: 3 })}`
 	context.vars.location = locations.sample()
 	context.vars.description = `${faker.lorem.paragraph()}`
-	context.vars.cost = random(500) + 200;
+	context.vars.price = random(500) + 200;
+	return done()
+}
+
+/**
+ * Generate data for a new house using Faker
+ */
+function genNewPeriod(context, events, done) {
 	context.vars.discount = 0;
-	if( random(20) == 0)
+	if( random(20) === 0)
 		context.vars.discount = random(5) * 10;
 	return done()
 }
@@ -205,7 +217,7 @@ function selectUserSkewed(context, events, done) {
 function selectHouse(context, events, done) {
 	delete context.vars.value;
 	if( typeof context.vars.user !== 'undefined' && typeof context.vars.housesLst !== 'undefined' && 
-			context.vars.housesLst.constructor == Array && context.vars.housesLst.length > 0) {
+			context.vars.housesLst.constructor === Array && context.vars.housesLst.length > 0) {
 		let house = context.vars.housesLst.sample()
 		context.vars.houseId = house.id;
 		context.vars.owner = house.owner;

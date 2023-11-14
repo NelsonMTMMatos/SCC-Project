@@ -186,6 +186,18 @@ public class CosmosDBLayer {
 		return rentals.readItem(id, key, RentalDAO.class);
 	}
 
+	public boolean hasIntersectingRentals(String houseId, String startDate, String endDate){
+		init();
+
+		String query = String.format("SELECT * FROM rentals \n" +
+						"WHERE rentals.houseId = '%s' \n" +
+						"AND rentals.startDate <= '%s' \n" +
+						"AND rentals.endDate >= '%s'",
+				houseId, endDate, startDate);
+		return rentals.queryItems(query, new CosmosQueryRequestOptions(), RentalDAO.class).iterator().hasNext();
+
+	}
+
 	public CosmosPagedIterable<HouseDAO> getHousesByLocation(String location) {
 		init();
 		String query = String.format("SELECT * FROM houses WHERE houses.location='%s'", location);
@@ -285,12 +297,17 @@ public class CosmosDBLayer {
 		return periods.queryItems(periodsQuery, new CosmosQueryRequestOptions(), PeriodDAO.class);
 	}
 
+
+
 	public void close() {
 		client.close();
 	}
 
 
+
+
 	//Ancillary methods
+
 	private CosmosPagedIterable<PeriodDAO> getIntersectingPeriods(String houseId, String startDate, String endDate){
 		init();
 

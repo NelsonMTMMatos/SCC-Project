@@ -49,7 +49,7 @@ public class RentalResource {
 
             rDAO = db.createRental(rDAO).getItem();
 
-            return Response.ok(rDAO.getId()).build();
+            return Response.ok(rDAO).build();
         } catch (CosmosException e) {
             if (e.getStatusCode() == 404)
                 return Response.status(Status.NOT_FOUND).build();

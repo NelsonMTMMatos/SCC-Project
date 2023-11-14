@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter;
 
 public class Helpers {
 
-    public static final boolean AUTH_ON = false;
+    public static final boolean AUTH_ON = true;
 
     private Helpers(){}
 

@@ -46,13 +46,13 @@ public class HouseResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response createHouse(@CookieParam("scc:session") Cookie session, House house){
 
-        if(Helpers.checkCookieUser(session, house.getOwnerId()) == null)
+        if(Helpers.checkCookieUser(session, house.getOwnerId()) == null && Helpers.AUTH_ON)
             return Response.status(Status.UNAUTHORIZED).build();
 
         HouseDAO hDAO = new HouseDAO(house);
         db.createHouse(hDAO);
 
-        return Response.ok(hDAO.getId()).build();
+        return Response.ok(hDAO).build();
     }
 
     @DELETE
@@ -62,7 +62,7 @@ public class HouseResource {
 
             HouseDAO hDAO = existentHouse(jedis, id, db);
 
-            if(Helpers.checkCookieUser(session, hDAO.getOwnerId()) == null)
+            if(Helpers.checkCookieUser(session, hDAO.getOwnerId()) == null && Helpers.AUTH_ON)
                 return Response.status(Status.UNAUTHORIZED).build();
 
             jedis.del(String.format(HOUSE_CACHE_ENTRY_FORMAT, id));
@@ -85,7 +85,7 @@ public class HouseResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateHouse(@CookieParam("scc:session") Cookie session, @PathParam(HOUSE_ID) String id, House house){
 
-            if(Helpers.checkCookieUser(session, house.getOwnerId()) == null)
+            if(Helpers.checkCookieUser(session, house.getOwnerId()) == null && Helpers.AUTH_ON)
                 return Response.status(Status.UNAUTHORIZED).build();
 
             HouseDAO hDAO = new HouseDAO(house);

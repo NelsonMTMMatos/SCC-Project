@@ -44,7 +44,8 @@ public class UserResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response auth(Login user) {
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
-            UserDAO userDAO = existentUser(jedis, user.getUsername());
+            String username = user.getUsername();
+            UserDAO userDAO = existentUser(jedis, username);
 
             boolean pwdOK = BCrypt.checkpw(user.getPassword(), userDAO.getPwd());
 
@@ -58,7 +59,7 @@ public class UserResource {
                         .secure(false)
                         .httpOnly(true)
                         .build();
-                RedisCache.putSession(new Session(uid, user.getUsername()));
+                RedisCache.putSession(new Session(uid, username));
                 return Response.ok().cookie(cookie).build();
             } else
                 throw new NotAuthorizedException("Incorrect login");

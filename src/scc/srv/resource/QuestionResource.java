@@ -50,7 +50,7 @@ public class QuestionResource {
 
             newQuestion = db.createQuestion(newQuestion).getItem();
 
-            return Response.ok(newQuestion.getId()).build();
+            return Response.ok(newQuestion).build();
         } catch (CosmosException e) {
             if (e.getStatusCode() == 404)
                 return Response.status(Status.NOT_FOUND).build();
