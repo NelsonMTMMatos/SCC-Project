@@ -70,7 +70,6 @@ public class UserResource {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.TEXT_PLAIN)
     public Response createUser(User user){
 
         try{
@@ -85,7 +84,6 @@ public class UserResource {
 
     @DELETE
     @Path("/{"+ ID + "}")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response deleteUser(@CookieParam("scc:session") Cookie session, @PathParam(ID) String id){
 
         if(Helpers.checkCookieUser(session, id) == null && Helpers.AUTH_ON)
@@ -121,7 +119,6 @@ public class UserResource {
     @PUT
     @Path("/{"+ ID + "}")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response updateUser(@CookieParam("scc:session") Cookie session, @PathParam(ID) String id, User user){
 
         if(Helpers.checkCookieUser(session, id) == null && Helpers.AUTH_ON)
@@ -131,7 +128,7 @@ public class UserResource {
             return Response.status(Status.FORBIDDEN).build();
 
         try {
-            db.updateUser(new UserDAO(user)).getItem();
+            db.updateUser(new UserDAO(user));
         }catch (CosmosException e) {
             if (e.getStatusCode() == 404)
                 return Response.status(Status.NOT_FOUND).build();
@@ -166,7 +163,6 @@ public class UserResource {
     @GET
     @Path("/{" + ID + "}/houses")
     @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
     public Response getHouses(@PathParam(ID) String id){
         try(Jedis jedis = RedisCache.getCachePool().getResource()){
             existentUser(jedis, id);

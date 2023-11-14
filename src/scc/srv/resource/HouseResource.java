@@ -57,7 +57,6 @@ public class HouseResource {
 
     @DELETE
     @Path("/{"+ HOUSE_ID + "}")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response deleteHouse(@CookieParam("scc:session") Cookie session, @PathParam(HOUSE_ID) String id){
         try(Jedis jedis = RedisCache.getCachePool().getResource()) {
 
@@ -84,7 +83,6 @@ public class HouseResource {
     @PUT
     @Path("/{"+ HOUSE_ID + "}")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response updateHouse(@CookieParam("scc:session") Cookie session, @PathParam(HOUSE_ID) String id, House house){
 
             if(Helpers.checkCookieUser(session, house.getOwnerId()) == null)
@@ -94,14 +92,14 @@ public class HouseResource {
             hDAO.setId(id);
 
             try{
-                hDAO = db.updateHouse(hDAO).getItem();
+                db.updateHouse(hDAO);
             }
              catch (CosmosException e) {
                 if (e.getStatusCode() == 404)
                     return Response.status(Status.NOT_FOUND).build();
             }
 
-            return Response.ok(hDAO.toHouse()).build();
+            return Response.ok().build();
     }
 
     @GET

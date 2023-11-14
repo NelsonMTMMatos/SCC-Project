@@ -31,7 +31,7 @@ public class MediaResource
 	@POST
 	@Consumes(MediaType.APPLICATION_OCTET_STREAM)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response upload(byte[] contents) {
+	public String upload(byte[] contents) {
 		String filename = Hash.of(contents) + ".jpg";
 		try{
 			BlobClient blob = containerClient.getBlobClient(filename);
@@ -41,7 +41,7 @@ public class MediaResource
 			e.printStackTrace();
 		}
 
-		return Response.ok(filename).build();
+		return filename;
 	}
 
 	/**
