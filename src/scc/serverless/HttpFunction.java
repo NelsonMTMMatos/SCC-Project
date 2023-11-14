@@ -58,4 +58,19 @@ public class HttpFunction {
 
 			return request.createResponseBuilder(HttpStatus.OK).body(filteredPeriods).build();
 	}
+
+
+	@FunctionName("most-recent-houses")
+	public HttpResponseMessage mostRecentHouses(
+			@HttpTrigger(
+					name = "req",
+					methods = {HttpMethod.GET},
+					authLevel = AuthorizationLevel.ANONYMOUS,
+					route = "serverless/houses/recent")
+			HttpRequestMessage<Optional<String>> request,
+			final ExecutionContext context) {
+		try(Jedis jedis = RedisCache.getCachePool().getResource()){
+			return request.createResponseBuilder(HttpStatus.OK).body(jedis.lrange("serverless::cosmos::houses", 0, -1)).build();
+		}
+	}
 }
