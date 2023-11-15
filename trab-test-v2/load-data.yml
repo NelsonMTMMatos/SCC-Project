@@ -81,8 +81,6 @@ scenarios:
                     endDate: "2024-12-01"
                     discount: "{{ discount }}"
                   afterResponse: "genNewPeriodReply"    # capture result and store in file
-                  
-                  
               - function: "genNewRental"         # Generate the needed information for the user
               - post:
                   url: "/houses/{{ houseId }}/rentals"

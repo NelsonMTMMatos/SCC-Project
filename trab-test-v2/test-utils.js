@@ -201,7 +201,7 @@ function genNewHouseReply(requestParams, response, context, ee, next) {
  */
 function genNewPeriod(context, events, done) {
 	context.vars.discount = 0;
-	if( random(20) === 0)
+	if( random(20) < 4)
 		context.vars.discount = random(5) * 10;
 	return done()
 }
@@ -228,8 +228,8 @@ function genNewRental(context, events, done) {
 
 	const { startDate, endDate} = getRandomDateInRange(start, end)
 
-	context.vars.startDate = startDate.toString();
-	context.vars.endDate = endDate.toString();
+	context.vars.startDate = startDate.toISOString().slice(0, 10);
+	context.vars.endDate = endDate.toISOString().slice(0, 10);
 
 	return done()
 }
