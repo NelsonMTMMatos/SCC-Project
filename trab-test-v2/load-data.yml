@@ -1,5 +1,5 @@
 config:
-  target: 'https://scc24appwesteurope60665.azurewebsites.net/rest'
+  target: 'https://scc24appwesteurope60483.azurewebsites.net/rest'
   plugins:
     metrics-by-endpoint:
       useOnlyRequestNames: true
@@ -11,36 +11,10 @@ config:
       duration: 1
       arrivalCount: 1
 
-    - name: "Create rentals & questions"    # Create users
-      duration: 1
-      arrivalCount: 1
-
 scenarios:
   - name: 'Create users & available houses'
     weight: 1
     flow:
-      - loop:                            # let's create 250 users - loop ... count
-          - post:                          # First: post image for the user
-              url: "/media"
-              headers:
-                Content-Type: application/octet-stream
-                Accept: application/json
-              beforeRequest: "uploadImageBody"
-              capture:
-                regexp: "(.+)"
-                as: "imageId"              # capture the reply as image id to be used in user creation
-          - function: "genNewUser"         # Generate the needed information for the user
-          - post:
-              url: "/users"
-              headers:
-                Content-Type: application/json
-              json:
-                id: "{{ userid }}"
-                name: "{{ name }}"
-                pwd: "{{ pwd }}"
-                photoId: "{{ imageId }}"
-              afterResponse: "genNewUserReply"    # capture result and store in file
-        count: 10
       - loop:                            # let's create 50 users - loop ... count
           - post:                          # First: post image for the user
               url: "/media"
@@ -107,42 +81,28 @@ scenarios:
                     endDate: "2024-12-01"
                     discount: "{{ discount }}"
                   afterResponse: "genNewPeriodReply"    # capture result and store in file
+                  
+                  
+              - function: "genNewRental"         # Generate the needed information for the user
+              - post:
+                  url: "/houses/{{ houseId }}/rentals"
+                  headers:
+                    Content-Type: application/json
+                    Accept: application/json
+                  json:
+                    userId: "{{ userid }}"
+                    startDate: "{{ startDate }}"
+                    endDate: "{{ endDate }}"
+                  afterResponse: "genNewRentalReply"    # capture result and store in file
+              - function: "genNewQuestion"
+              - post:
+                  url: "/houses/{{ houseId }}/questions"
+                  headers:
+                    Content-Type: application/json
+                    Accept: application/json
+                  json:
+                    userId: "{{ userid }}"
+                    questionContent: "{{ questionContent }}"
+                  afterResponse: "genNewQuestionReply"    # capture result and store in file
             whileTrue: "random20"
-        count: 10
-
-
-  - name: 'Create rentals & questions'
-    weight: 1
-    flow:
-      - loop: # let's create 250 users - loop ... count
-          - function: "selectUser"
-          - function: "selectHouse2"
-          - post:
-              url: "/users/auth"
-              headers:
-                Content-Type: application/json
-                Accept: application/json
-              json:
-                username: "{{ user }}"
-                password: "{{ pwd }}"
-          - function: "genNewRental"         # Generate the needed information for the user
-          - post:
-              url: "/houses/{{ houseId }}/rentals"
-              headers:
-                Content-Type: application/json
-              json:
-                userId: "{{ user }}"
-                startDate: "{{ startDate }}"
-                endDate: "{{ endDate }}"
-              afterResponse: "genNewRentalReply"    # capture result and store in file
-          - function: "genNewQuestion"
-          - post:
-              url: "/houses/{{ houseId }}/questions"
-              headers:
-                Content-Type: application/json
-              json:
-                userId: "{{ user }}"
-                questionContent: "{{ questionContent }}"
-                replyContent: ""
-              afterResponse: "genNewQuestionReply"    # capture result and store in file
         count: 10

@@ -79,10 +79,10 @@ function randomSkewed( val){
 function loadData() {
 	var i
 	var basefile
-	if( fs.existsSync( '/images')) 
+	if( fs.existsSync( '/images'))
 		basefile = '/images/house.'
 	else
-		basefile =  'images/house.'	
+		basefile =  'images/house.'
 	for( i = 1; i <= 40 ; i++) {
 		var img  = fs.readFileSync(basefile + i + '.jpg')
 		images.push( img)
@@ -125,14 +125,14 @@ function uploadImageBody(requestParams, context, ee, next) {
 }
 
 /**
- * Process reply of the download of an image. 
+ * Process reply of the download of an image.
  * Update the next image to read.
  */
 function processUploadReply(requestParams, response, context, ee, next) {
 	if( typeof response.body !== 'undefined' && response.body.length > 0) {
 		imagesIds.push(response.body)
 	}
-    return next()
+	return next()
 }
 
 /**
@@ -169,7 +169,7 @@ function genNewUserReply(requestParams, response, context, ee, next) {
 		users.push(u)
 		fs.writeFileSync('users.data', JSON.stringify(users));
 	}
-    return next()
+	return next()
 }
 
 /**
@@ -228,8 +228,8 @@ function genNewRental(context, events, done) {
 
 	const { startDate, endDate} = getRandomDateInRange(start, end)
 
-	context.vars.startDate = startDate;
-	context.vars.endDate = endDate;
+	context.vars.startDate = startDate.toString();
+	context.vars.endDate = endDate.toString();
 
 	return done()
 }
@@ -242,7 +242,7 @@ function genNewRentalReply(requestParams, response, context, ee, next) {
 	if( response.statusCode >= 200 && response.statusCode < 300 && response.body.length > 0)  {
 		let r = JSON.parse( response.body)
 		rentals.push(r)
-		fs.writeFileSync('rentals.data', JSON.stringify(rentals));
+		fs.writeFileSync('rentals.data', JSON.stringify(rentals))
 	}
 	return next()
 }
@@ -307,8 +307,8 @@ function selectUserSkewed(context, events, done) {
  */
 function selectHouse(context, events, done) {
 	delete context.vars.value;
-	if( typeof context.vars.user !== 'undefined' && typeof context.vars.housesLst !== 'undefined' && 
-			context.vars.housesLst.constructor === Array && context.vars.housesLst.length > 0) {
+	if( typeof context.vars.user !== 'undefined' && typeof context.vars.housesLst !== 'undefined' &&
+		context.vars.housesLst.constructor === Array && context.vars.housesLst.length > 0) {
 		let house = context.vars.housesLst.sample()
 		context.vars.houseId = house.id;
 		context.vars.owner = house;
@@ -337,8 +337,8 @@ function selectHouse2(context, events, done) {
  */
 function selectRental(context, events, done) {
 	delete context.vars.value;
-	if( typeof context.vars.user !== 'undefined' && typeof context.vars.rentalsLst !== 'undefined' && 
-			context.vars.rentalsLst.constructor === Array && context.vars.rentalsLst.length > 0) {
+	if( typeof context.vars.user !== 'undefined' && typeof context.vars.rentalsLst !== 'undefined' &&
+		context.vars.rentalsLst.constructor === Array && context.vars.rentalsLst.length > 0) {
 		let rental = context.vars.rentalsLst.sample()
 		context.vars.rentalId = rental.id;
 		context.vars.owner = rental.owner;
@@ -354,8 +354,8 @@ function selectRental(context, events, done) {
  */
 function selectQuestion(context, events, done) {
 	delete context.vars.value;
-	if( typeof context.vars.user !== 'undefined' && typeof context.vars.questionLst !== 'undefined' && 
-			context.vars.questionLst.constructor === Array && context.vars.questionLst.length > 0) {
+	if( typeof context.vars.user !== 'undefined' && typeof context.vars.questionLst !== 'undefined' &&
+		context.vars.questionLst.constructor === Array && context.vars.questionLst.length > 0) {
 		let question = context.vars.questionLst.sample()
 		context.vars.questionId = question.id;
 		context.vars.owner = question.owner;
@@ -380,7 +380,7 @@ function decideNextAction(context, events, done) {
 		context.vars.nextAction = 0; // select discount
 		context.vars.housesLst = context.vars.housesDiscountLst;
 	} else {
-		context.vars.nextAction = 1; // select location 
+		context.vars.nextAction = 1; // select location
 		context.vars.location = locations.sample();
 		context.vars.initDate = randomDate();
 		context.vars.endDate = context.vars.date;
@@ -401,43 +401,43 @@ function decideNextAction(context, events, done) {
 
 
 /**
- * Return true with probability 20% 
+ * Return true with probability 20%
  */
 function random20(context, next) {
-  const continueLooping = Math.random() < 0.2
-  return next(continueLooping);
+	const continueLooping = Math.random() < 0.2
+	return next(continueLooping);
 }
 
 /**
- * Return true with probability 50% 
+ * Return true with probability 50%
  */
 function random50(context, next) {
-  const continueLooping = Math.random() < 0.5
-  return next(continueLooping);
+	const continueLooping = Math.random() < 0.5
+	return next(continueLooping);
 }
 
 /**
- * Return true with probability 70% 
+ * Return true with probability 70%
  */
 function random70(context, next) {
-  const continueLooping = Math.random() < 0.7
-  return next(continueLooping);
+	const continueLooping = Math.random() < 0.7
+	return next(continueLooping);
 }
 
 /**
- * Return true with probability 70% 
+ * Return true with probability 70%
  */
 function random80(context, next) {
-  const continueLooping = Math.random() < 0.8
-  return next(continueLooping);
+	const continueLooping = Math.random() < 0.8
+	return next(continueLooping);
 }
 
 /**
- * Return true with probability 70% 
+ * Return true with probability 70%
  */
 function random90(context, next) {
-  const continueLooping = Math.random() < 0.9
-  return next(continueLooping);
+	const continueLooping = Math.random() < 0.9
+	return next(continueLooping);
 }
 
 /**
@@ -452,4 +452,3 @@ function getRandomDateInRange(start, end) {
 
 	return { startDate, endDate };
 }
-
