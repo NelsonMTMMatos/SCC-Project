@@ -96,12 +96,12 @@ public class PeriodDAO {
 
     @Override
     public String toString() {
-        return "Period{" +
+        return "PeriodDAO{" +
                 "id='" + id + '\'' +
                 ", houseId='" + houseId + '\'' +
                 ", discount=" + discount +
-                ", startDate=" + startDate +
-                ", endDate=" + endDate +
+                ", startDate='" + startDate + '\'' +
+                ", endDate='" + endDate + '\'' +
                 '}';
     }
 }

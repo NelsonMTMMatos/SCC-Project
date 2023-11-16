@@ -104,8 +104,13 @@ public class RentalDAO {
 
     @Override
     public String toString() {
-        return "RentalDAO [_rid=" + _rid + ", _ts=" + _ts + ", id=" + id + ", houseId=" + houseId + ", userId=" + userId
-                + ", startDate=" + startDate + ", endDate=" + endDate + ", price=" + price + "]";
+        return "RentalDAO{" +
+                "id='" + id + '\'' +
+                ", houseId='" + houseId + '\'' +
+                ", userId='" + userId + '\'' +
+                ", endDate='" + endDate + '\'' +
+                ", startDate='" + startDate + '\'' +
+                ", price=" + price +
+                '}';
     }
-
 }

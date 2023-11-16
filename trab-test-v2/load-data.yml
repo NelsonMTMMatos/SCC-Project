@@ -1,5 +1,5 @@
 config:
-  target: 'https://scc24appwesteurope60483.azurewebsites.net/rest'
+  target: 'https://scc24appwesteurope60665.azurewebsites.net/rest'
   plugins:
     metrics-by-endpoint:
       useOnlyRequestNames: true
@@ -7,7 +7,7 @@ config:
   variables:
     metricsProcessEndpoint : "myProcessEndpoint"  # function used to aggregate endpoints for statistics
   phases:
-    - name: "Create users & available houses"    # Create users
+    - name: "Create"    # Create users
       duration: 1
       arrivalCount: 1
 
@@ -30,6 +30,7 @@ scenarios:
               url: "/users"
               headers:
                 Content-Type: application/json
+                Accept: application/json
               json:
                 id: "{{ userid }}"
                 name: "{{ name }}"
@@ -67,7 +68,7 @@ scenarios:
                     ownerId: "{{ userid }}"
                     photoIds: ["{{ imageId }}"]
                   capture:
-                    json: "$.id"
+                    regexp: "[^\n]+"
                     as: "houseId"              # capture the house id to be used in house creation
                   afterResponse: "genNewHouseReply"    # capture result and store in file
               - function: "genNewPeriod"
@@ -77,30 +78,9 @@ scenarios:
                     Content-Type: application/json
                     Accept: application/json
                   json:
-                    startDate: "2023-12-01"
-                    endDate: "2024-12-01"
-                    discount: "{{ discount }}"
-                  afterResponse: "genNewPeriodReply"    # capture result and store in file
-              - function: "genNewRental"         # Generate the needed information for the user
-              - post:
-                  url: "/houses/{{ houseId }}/rentals"
-                  headers:
-                    Content-Type: application/json
-                    Accept: application/json
-                  json:
-                    userId: "{{ userid }}"
                     startDate: "{{ startDate }}"
                     endDate: "{{ endDate }}"
-                  afterResponse: "genNewRentalReply"    # capture result and store in file
-              - function: "genNewQuestion"
-              - post:
-                  url: "/houses/{{ houseId }}/questions"
-                  headers:
-                    Content-Type: application/json
-                    Accept: application/json
-                  json:
-                    userId: "{{ userid }}"
-                    questionContent: "{{ questionContent }}"
-                  afterResponse: "genNewQuestionReply"    # capture result and store in file
+                    discount: "{{ discount }}"
+                  afterResponse: "genNewPeriodReply"    # capture result and store in file
             whileTrue: "random20"
-        count: 10
+        count: 50

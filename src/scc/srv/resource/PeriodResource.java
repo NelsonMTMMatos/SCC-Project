@@ -51,7 +51,7 @@ public class PeriodResource {
 
             db.createPeriod(newPeriod);
 
-            return Response.ok(newPeriod).build();
+            return Response.ok(newPeriod.getId()).build();
         } catch (CosmosException e) {
             if (e.getStatusCode() == 404)
                 return Response.status(Response.Status.NOT_FOUND).build();

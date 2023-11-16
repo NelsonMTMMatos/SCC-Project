@@ -66,10 +66,14 @@ public class UserDAO {
 	public User toUser() {
 		return new User( id, name, pwd, photoId);
 	}
+
 	@Override
 	public String toString() {
-		return "UserDAO [_rid=" + _rid + ", _ts=" + _ts + ", id=" + id + ", name=" + name + ", pwd=" + pwd
-				+ ", photoId=" + photoId + "]";
+		return "UserDAO{" +
+				"id='" + id + '\'' +
+				", name='" + name + '\'' +
+				", pwd='" + pwd + '\'' +
+				", photoId='" + photoId + '\'' +
+				'}';
 	}
-
 }

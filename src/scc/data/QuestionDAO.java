@@ -85,8 +85,12 @@ public class QuestionDAO {
 
     @Override
     public String toString() {
-        return "Question[id=" + id + ", houseId=" + houseId + ", userId=" + userId +
-                ", questionContent=" + questionContent + ", replyContent=" + replyContent +
-                "]";
+        return "QuestionDAO{" +
+                "id='" + id + '\'' +
+                ", houseId='" + houseId + '\'' +
+                ", userId='" + userId + '\'' +
+                ", questionContent='" + questionContent + '\'' +
+                ", replyContent='" + replyContent + '\'' +
+                '}';
     }
 }

@@ -103,13 +103,13 @@ public class HouseDAO {
 
     @Override
     public String toString() {
-        return "House{" +
-                "id=" + id +
+        return "HouseDAO{" +
+                "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 ", location='" + location + '\'' +
                 ", description='" + description + '\'' +
-                ", price='" + price + '\'' +
-                ", photoIds='" + Arrays.toString(photoIds) + '\'' +
+                ", price=" + price +
+                ", photoIds=" + Arrays.toString(photoIds) +
                 ", ownerId='" + ownerId + '\'' +
                 '}';
     }

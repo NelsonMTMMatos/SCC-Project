@@ -49,9 +49,14 @@ public class User {
 	public void setPhotoId(String photoId) {
 		this.photoId = photoId;
 	}
+
 	@Override
 	public String toString() {
-		return "User [id=" + id + ", name=" + name + ", pwd=" + pwd + ", photoId=" + photoId + "]";
+		return "User{" +
+				"id='" + id + '\'' +
+				", name='" + name + '\'' +
+				", pwd='" + pwd + '\'' +
+				", photoId='" + photoId + '\'' +
+				'}';
 	}
-
 }

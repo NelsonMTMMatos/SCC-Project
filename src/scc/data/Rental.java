@@ -44,7 +44,10 @@ public class Rental {
 
     @Override
     public String toString() {
-        return "Rental [ userId=" + userId
-                + ", startDate=" + startDate + ", endDate=" + endDate + "]";
+        return "Rental{" +
+                "userId='" + userId + '\'' +
+                ", startDate='" + startDate + '\'' +
+                ", endDate='" + endDate + '\'' +
+                '}';
     }
 }

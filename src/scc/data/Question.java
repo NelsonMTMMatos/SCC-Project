@@ -30,8 +30,10 @@ public class Question {
 
     @Override
     public String toString() {
-        return "Question [userId='" + userId +
-                ", questionContent='" + questionContent + ", replyContent='" + replyContent +
-                ']';
+        return "Question{" +
+                "userId='" + userId + '\'' +
+                ", questionContent='" + questionContent + '\'' +
+                ", replyContent='" + replyContent + '\'' +
+                '}';
     }
 }
