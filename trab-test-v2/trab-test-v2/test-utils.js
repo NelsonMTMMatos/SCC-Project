@@ -1,0 +1,460 @@
+'use strict';
+
+/***
+ * Exported functions to be used in the testing scripts.
+ */
+module.exports = {
+	uploadImageBody,
+	genNewUser,
+	genNewUserReply,
+	genNewHouse,
+	genNewHouseReply,
+	genNewPeriod,
+	genNewPeriodReply,
+	genNewRental,
+	genNewRentalReply,
+	genNewQuestion,
+	genNewQuestionReply,
+	selectUser,
+	selectUserSkewed,
+	decideNextAction,
+	selectHouse,
+	selectHouseByLocation,
+	selectRental,
+	selectQuestion,
+	selectQuestion2,
+	random20,
+	random50,
+	random70,
+	random80,
+	random90
+}
+
+const { faker } = require('@faker-js/faker');
+const fs = require('fs')
+
+var imagesIds = []
+var images = []
+var users = []
+var houses = []
+var periods = []
+var questions = []
+var rentals = []
+const locations = ["Lisbon","Porto","Madeira","Azores","Algarve","Braga","Coimbra","Evora","Aveiro","Leiria"]
+
+// Auxiliary function to select an element from an array
+Array.prototype.sample = function(){
+	return this[Math.floor(Math.random()*this.length)]
+}
+
+// Auxiliary function to select an element from an array
+Array.prototype.sampleSkewed = function(){
+	return this[randomSkewed(this.length)]
+}
+
+// Returns a random date
+function randomDate() {
+	let n = random(13);
+	if( n == 0)
+		return "12-2023";
+	if( n < 10)
+		return " " + n.toString()+ "-2024";
+	else
+		return n.toString()+ "-2024";
+}
+
+
+// Returns a random value, from 0 to val
+function random( val){
+	return Math.floor(Math.random() * val)
+}
+
+// Returns a random value, from 0 to val
+function randomSkewed( val){
+	let beta = Math.pow(Math.sin(Math.random()*Math.PI/2),2)
+	let beta_left = (beta < 0.5) ? 2*beta : 2*(1-beta);
+	return Math.floor(beta_left * val)
+}
+
+// Loads data about images from disk
+function loadData() {
+	var i
+	var basefile
+	if( fs.existsSync( '/images'))
+		basefile = '/images/house.'
+	else
+		basefile =  'images/house.'
+	for( i = 1; i <= 40 ; i++) {
+		var img  = fs.readFileSync(basefile + i + '.jpg')
+		images.push( img)
+	}
+	var str;
+	if( fs.existsSync('users.data')) {
+		str = fs.readFileSync('users.data','utf8')
+		users = JSON.parse(str)
+	}
+
+	if( fs.existsSync('houses.data')) {
+		str = fs.readFileSync('houses.data','utf8')
+		houses = JSON.parse(str)
+	}
+
+	if( fs.existsSync('periods.data')) {
+		str = fs.readFileSync('periods.data','utf8')
+		periods = JSON.parse(str)
+	}
+
+	if( fs.existsSync('rentals.data')) {
+		str = fs.readFileSync('rentals.data','utf8')
+		rentals = JSON.parse(str)
+	}
+
+	if( fs.existsSync('questions.data')) {
+		str = fs.readFileSync('questions.data','utf8')
+		questions = JSON.parse(str)
+	}
+}
+
+loadData();
+
+/**
+ * Sets the body to an image, when using images.
+ */
+function uploadImageBody(requestParams, context, ee, next) {
+	requestParams.body = images.sample()
+	return next()
+}
+
+/**
+ * Process reply of the download of an image.
+ * Update the next image to read.
+ */
+function processUploadReply(requestParams, response, context, ee, next) {
+	if( typeof response.body !== 'undefined' && response.body.length > 0) {
+		imagesIds.push(response.body)
+	}
+	return next()
+}
+
+/**
+ * Select an image to download.
+ */
+function selectImageToDownload(context, events, done) {
+	if( imagesIds.length > 0) {
+		context.vars.imageId = imagesIds.sample()
+	} else {
+		delete context.vars.imageId
+	}
+	return done()
+}
+
+/**
+ * Generate data for a new user using Faker
+ */
+function genNewUser(context, events, done) {
+	const first = `${faker.person.firstName()}`
+	const last = `${faker.person.lastName()}`
+	context.vars.userid = first + "." + last
+	context.vars.name = first + " " + last
+	context.vars.pwd = `${faker.internet.password()}`
+	return done()
+}
+
+
+/**
+ * Process reply for of new users to store the id on file
+ */
+function genNewUserReply(requestParams, response, context, ee, next) {
+	if( response.statusCode >= 200 && response.statusCode < 300 && response.body.length > 0)  {
+		let u = JSON.parse( response.body)
+		users.push(u)
+		fs.writeFileSync('users.data', JSON.stringify(users));
+	}
+	return next()
+}
+
+/**
+ * Generate data for a new house using Faker
+ */
+function genNewHouse(context, events, done) {
+	context.vars.name = `${faker.lorem.words({ min: 1, max: 3 })}`
+	context.vars.location = locations.sample()
+	context.vars.description = `${faker.lorem.paragraph()}`
+	context.vars.price = random(500) + 200;
+	return done()
+}
+
+/**
+ * Process reply for of new houses to store the id on file
+ */
+function genNewHouseReply(requestParams, response, context, ee, next) {
+	if( response.statusCode >= 200 && response.statusCode < 300 && response.body.length > 0)  {
+		houses.push(response.body)
+		fs.writeFileSync('houses.data', JSON.stringify(houses));
+	}
+	return next()
+}
+
+
+/**
+ * Generate data for a new period using Faker
+ */
+function genNewPeriod(context, events, done) {
+	context.vars.discount = 0;
+	if( random(20) < 4)
+		context.vars.discount = random(5) * 10;
+
+	const { startDate, endDate} = getRandomDateInRange(new Date("2023-12-01"), new Date("2024-12-01"))
+	context.vars.startDate = startDate.toISOString().slice(0, 10);
+	context.vars.endDate = endDate.toISOString().slice(0, 10);
+
+	return done()
+}
+
+/**
+ * Process reply for of new period to store the id on file
+ */
+function genNewPeriodReply(requestParams, response, context, ee, next) {
+	if( response.statusCode >= 200 && response.statusCode < 300 && response.body.length > 0)  {
+		periods.push(response.body)
+		fs.writeFileSync('periods.data', JSON.stringify(periods));
+	}
+	return next()
+}
+
+
+/**
+ * Generate data for a new rental using Faker
+ */
+function genNewRental(context, events, done) {
+	const start = new Date("2023-12-01")
+	const end = new Date("2024-12-01");
+
+	const { startDate, endDate} = getRandomDateInRange(start, end)
+
+	context.vars.startDate = startDate.toISOString().slice(0, 10);
+	context.vars.endDate = endDate.toISOString().slice(0, 10);
+
+	return done()
+}
+
+
+/**
+ * Process reply for of new rental to store the id on file
+ */
+function genNewRentalReply(requestParams, response, context, ee, next) {
+	if( response.statusCode >= 200 && response.statusCode < 300 && response.body.length > 0)  {
+		rentals.push(response.body)
+		fs.writeFileSync('rentals.data', JSON.stringify(rentals))
+	}
+	return next()
+}
+
+
+/**
+ * Generate data for a new question using Faker
+ */
+function genNewQuestion(context, events, done) {
+	context.vars.questionContent = faker.lorem.sentence(7).slice(0, -1) + '?';
+	return done()
+}
+
+/**
+ * Process reply for of new rental to store the id on file
+ */
+function genNewQuestionReply(requestParams, response, context, ee, next) {
+	if( response.statusCode >= 200 && response.statusCode < 300 && response.body.length > 0)  {
+		questions.push(response.body)
+		fs.writeFileSync('questions.data', JSON.stringify(questions));
+	}
+	return next()
+}
+
+
+/**
+ * Select user
+ */
+function selectUser(context, events, done) {
+	if( users.length > 0) {
+		let user = users.sample()
+		context.vars.user = user.id
+		context.vars.pwd = user.pwd
+	} else {
+		delete context.vars.user
+		delete context.vars.pwd
+	}
+	return done()
+}
+
+
+/**
+ * Select user
+ */
+function selectUserSkewed(context, events, done) {
+	if( users.length > 0) {
+		let user = users.sampleSkewed()
+		context.vars.user = user.id
+		context.vars.pwd = user.pwd
+	} else {
+		delete context.vars.user
+		delete context.vars.pwd
+	}
+	return done()
+}
+
+
+/**
+ * Select house from a list of houses
+ * assuming: user context.vars.user; houses context.vars.housesLst
+ */
+function selectHouse(context, events, done) {
+	if( houses.length > 0) {
+		context.vars.houseId = houses.sample()
+	} else
+		delete context.vars.houseId
+	return done()
+}
+
+
+function selectHouseByLocation(context, events, done) {
+	if( typeof context.vars.housesLocationLst !== 'undefined' &&
+		context.vars.housesLocationLst.constructor === Array && context.vars.housesLocationLst.length > 0) {
+		let house = context.vars.housesLocationLst.sample()
+		context.vars.houseId = house.id
+	} else
+		delete context.vars.houseId
+	return done()
+}
+
+
+/**
+ * Select rental from a list of rentals
+ * assuming: user context.vars.user; rentals context.vars.rentalsLst
+ */
+function selectRental(context, events, done) {
+	if( typeof context.vars.periodLst !== 'undefined' &&
+		context.vars.periodLst.constructor === Array && context.vars.periodLst.length > 0) {
+		let period = context.vars.periodLst.sample()
+		context.vars.startDate = period.startDate;
+		context.vars.endDate = period.endDate;
+	}
+
+	return done()
+}
+
+/**
+ * Select question from a list of question
+ * assuming: user context.vars.user; questions context.vars.questionLst
+ */
+function selectQuestion(context, events, done) {
+	delete context.vars.value;
+	if( typeof context.vars.user !== 'undefined' && typeof context.vars.questionLst !== 'undefined' &&
+		context.vars.questionLst.constructor === Array && context.vars.questionLst.length > 0) {
+		let question = context.vars.questionLst.sample()
+		context.vars.questionId = question.id;
+		context.vars.owner = question.owner;
+		context.vars.houseId = question.houseId;
+		context.vars.question = question.questionContent;
+		context.vars.reply = faker.lorem.sentence(2);
+	} else
+		delete context.vars.questionId
+	return done()
+}
+
+
+function selectQuestion2(context, events, done) {
+	delete context.vars.value;
+	if( typeof context.vars.user !== 'undefined' && typeof context.vars.questionLst !== 'undefined' &&
+		context.vars.questionLst.constructor === Array && context.vars.questionLst.length > 0) {
+		let question = context.vars.questionLst.sample()
+		context.vars.questionId = question.id;
+		context.vars.reply = faker.lorem.sentence(2);
+	} else
+		delete context.vars.questionId
+	return done()
+}
+
+
+/**
+ * Decide next action
+ * 0 -> browse popular
+ * 1 -> browse recent
+ */
+function decideNextAction(context, events, done) {
+	let rnd = Math.random()
+	if( rnd < 0.1) {
+		context.vars.nextAction = 0; // select discount
+		context.vars.housesLst = context.vars.housesDiscountLst;
+	} else {
+		context.vars.nextAction = 1; // select location
+		context.vars.location = locations.sample();
+		context.vars.initDate = randomDate();
+		context.vars.endDate = context.vars.date;
+	}
+	if( rnd < 0.3)
+		context.vars.afterNextAction = 0; // browsing
+	else if( rnd < 0.4)
+		context.vars.afterNextAction = 1; // check questions
+	else if( rnd < 0.45) {
+		context.vars.afterNextAction = 2; // post questions
+		context.vars.text = `${faker.lorem.paragraph()}`;
+	} else if( rnd < 0.60)
+		context.vars.afterNextAction = 3; // reserve
+	else
+		context.vars.afterNextAction = 4; // do nothing
+	return done()
+}
+
+
+/**
+ * Return true with probability 20%
+ */
+function random20(context, next) {
+	const continueLooping = Math.random() < 0.2
+	return next(continueLooping);
+}
+
+/**
+ * Return true with probability 50%
+ */
+function random50(context, next) {
+	const continueLooping = Math.random() < 0.5
+	return next(continueLooping);
+}
+
+/**
+ * Return true with probability 70%
+ */
+function random70(context, next) {
+	const continueLooping = Math.random() < 0.7
+	return next(continueLooping);
+}
+
+/**
+ * Return true with probability 70%
+ */
+function random80(context, next) {
+	const continueLooping = Math.random() < 0.8
+	return next(continueLooping);
+}
+
+/**
+ * Return true with probability 70%
+ */
+function random90(context, next) {
+	const continueLooping = Math.random() < 0.9
+	return next(continueLooping);
+}
+
+/**
+ * Return a random date between a start and end date.
+ */
+function getRandomDateInRange(start, end) {
+	let startDate, endDate;
+	do {
+		startDate = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+		endDate = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+	} while (startDate > endDate);
+
+	return { startDate, endDate };
+}

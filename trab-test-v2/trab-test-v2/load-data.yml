@@ -1,0 +1,86 @@
+config:
+  target: 'https://scc24appwesteurope60665.azurewebsites.net/rest'
+  plugins:
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+  processor: "./test-utils.js"
+  variables:
+    metricsProcessEndpoint : "myProcessEndpoint"  # function used to aggregate endpoints for statistics
+  phases:
+    - name: "Create"    # Create users
+      duration: 1
+      arrivalCount: 1
+
+scenarios:
+  - name: 'Create users & available houses'
+    weight: 1
+    flow:
+      - loop:                            # let's create 50 users - loop ... count
+          - post:                          # First: post image for the user
+              url: "/media"
+              headers:
+                Content-Type: application/octet-stream
+                Accept: application/json
+              beforeRequest: "uploadImageBody"
+              capture:
+                regexp: "(.+)"
+                as: "imageId"              # capture the reply as image id to be used in user creation
+          - function: "genNewUser"         # Generate the needed information for the user
+          - post:
+              url: "/users"
+              headers:
+                Content-Type: application/json
+                Accept: application/json
+              json:
+                id: "{{ userid }}"
+                name: "{{ name }}"
+                pwd: "{{ pwd }}"
+                photoId: "{{ imageId }}"
+              afterResponse: "genNewUserReply"    # capture result and store in file
+          - post:
+              url: "/users/auth"
+              headers:
+                Content-Type: application/json
+              json:
+                username: "{{ userid }}"
+                password: "{{ pwd }}"
+          - loop:                            # let's create 50 houses - loop ... count
+              - post:                          # First: post image for the house
+                  url: "/media"
+                  headers:
+                    Content-Type: application/octet-stream
+                    Accept: application/json
+                  beforeRequest: "uploadImageBody"
+                  capture:
+                    regexp: "(.+)"
+                    as: "imageId"              # capture the reply as image id to be used in house creation
+              - function: "genNewHouse"         # Generate the needed information for the house
+              - post:
+                  url: "/houses"
+                  headers:
+                    Content-Type: application/json
+                    Accept: application/json
+                  json:
+                    name: "{{ name }}"
+                    location: "{{ location }}"
+                    description: "{{ description }}"
+                    price: "{{ price }}"
+                    ownerId: "{{ userid }}"
+                    photoIds: ["{{ imageId }}"]
+                  capture:
+                    regexp: "[^\n]+"
+                    as: "houseId"              # capture the house id to be used in house creation
+                  afterResponse: "genNewHouseReply"    # capture result and store in file
+              - function: "genNewPeriod"
+              - post:                          # make this house available
+                  url: "/houses/{{ houseId }}/periods"
+                  headers:
+                    Content-Type: application/json
+                    Accept: application/json
+                  json:
+                    startDate: "{{ startDate }}"
+                    endDate: "{{ endDate }}"
+                    discount: "{{ discount }}"
+                  afterResponse: "genNewPeriodReply"    # capture result and store in file
+            whileTrue: "random20"
+        count: 50
