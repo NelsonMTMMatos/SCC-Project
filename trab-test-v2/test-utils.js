@@ -19,9 +19,10 @@ module.exports = {
 	selectUserSkewed,
 	decideNextAction,
 	selectHouse,
-	selectHouse2,
+	selectHouseByLocation,
 	selectRental,
 	selectQuestion,
+	selectQuestion2,
 	random20,
 	random50,
 	random70,
@@ -79,10 +80,10 @@ function randomSkewed( val){
 function loadData() {
 	var i
 	var basefile
-	if( fs.existsSync( '/images')) 
+	if( fs.existsSync( '/images'))
 		basefile = '/images/house.'
 	else
-		basefile =  'images/house.'	
+		basefile =  'images/house.'
 	for( i = 1; i <= 40 ; i++) {
 		var img  = fs.readFileSync(basefile + i + '.jpg')
 		images.push( img)
@@ -125,14 +126,14 @@ function uploadImageBody(requestParams, context, ee, next) {
 }
 
 /**
- * Process reply of the download of an image. 
+ * Process reply of the download of an image.
  * Update the next image to read.
  */
 function processUploadReply(requestParams, response, context, ee, next) {
 	if( typeof response.body !== 'undefined' && response.body.length > 0) {
 		imagesIds.push(response.body)
 	}
-    return next()
+	return next()
 }
 
 /**
@@ -169,7 +170,7 @@ function genNewUserReply(requestParams, response, context, ee, next) {
 		users.push(u)
 		fs.writeFileSync('users.data', JSON.stringify(users));
 	}
-    return next()
+	return next()
 }
 
 /**
@@ -188,8 +189,7 @@ function genNewHouse(context, events, done) {
  */
 function genNewHouseReply(requestParams, response, context, ee, next) {
 	if( response.statusCode >= 200 && response.statusCode < 300 && response.body.length > 0)  {
-		let h = JSON.parse( response.body)
-		houses.push(h)
+		houses.push(response.body)
 		fs.writeFileSync('houses.data', JSON.stringify(houses));
 	}
 	return next()
@@ -201,8 +201,13 @@ function genNewHouseReply(requestParams, response, context, ee, next) {
  */
 function genNewPeriod(context, events, done) {
 	context.vars.discount = 0;
-	if( random(20) === 0)
+	if( random(20) < 4)
 		context.vars.discount = random(5) * 10;
+
+	const { startDate, endDate} = getRandomDateInRange(new Date("2023-12-01"), new Date("2024-12-01"))
+	context.vars.startDate = startDate.toISOString().slice(0, 10);
+	context.vars.endDate = endDate.toISOString().slice(0, 10);
+
 	return done()
 }
 
@@ -211,8 +216,7 @@ function genNewPeriod(context, events, done) {
  */
 function genNewPeriodReply(requestParams, response, context, ee, next) {
 	if( response.statusCode >= 200 && response.statusCode < 300 && response.body.length > 0)  {
-		let p = JSON.parse( response.body)
-		periods.push(p)
+		periods.push(response.body)
 		fs.writeFileSync('periods.data', JSON.stringify(periods));
 	}
 	return next()
@@ -228,8 +232,8 @@ function genNewRental(context, events, done) {
 
 	const { startDate, endDate} = getRandomDateInRange(start, end)
 
-	context.vars.startDate = startDate;
-	context.vars.endDate = endDate;
+	context.vars.startDate = startDate.toISOString().slice(0, 10);
+	context.vars.endDate = endDate.toISOString().slice(0, 10);
 
 	return done()
 }
@@ -240,9 +244,8 @@ function genNewRental(context, events, done) {
  */
 function genNewRentalReply(requestParams, response, context, ee, next) {
 	if( response.statusCode >= 200 && response.statusCode < 300 && response.body.length > 0)  {
-		let r = JSON.parse( response.body)
-		rentals.push(r)
-		fs.writeFileSync('rentals.data', JSON.stringify(rentals));
+		rentals.push(response.body)
+		fs.writeFileSync('rentals.data', JSON.stringify(rentals))
 	}
 	return next()
 }
@@ -252,7 +255,7 @@ function genNewRentalReply(requestParams, response, context, ee, next) {
  * Generate data for a new question using Faker
  */
 function genNewQuestion(context, events, done) {
-	context.vars.questionContent = faker.lorem.sentence(3).slice(0, -1) + '?';
+	context.vars.questionContent = faker.lorem.sentence(7).slice(0, -1) + '?';
 	return done()
 }
 
@@ -261,8 +264,7 @@ function genNewQuestion(context, events, done) {
  */
 function genNewQuestionReply(requestParams, response, context, ee, next) {
 	if( response.statusCode >= 200 && response.statusCode < 300 && response.body.length > 0)  {
-		let q = JSON.parse( response.body)
-		questions.push(q)
+		questions.push(response.body)
 		fs.writeFileSync('questions.data', JSON.stringify(questions));
 	}
 	return next()
@@ -306,25 +308,19 @@ function selectUserSkewed(context, events, done) {
  * assuming: user context.vars.user; houses context.vars.housesLst
  */
 function selectHouse(context, events, done) {
-	delete context.vars.value;
-	if( typeof context.vars.user !== 'undefined' && typeof context.vars.housesLst !== 'undefined' && 
-			context.vars.housesLst.constructor === Array && context.vars.housesLst.length > 0) {
-		let house = context.vars.housesLst.sample()
-		context.vars.houseId = house.id;
-		context.vars.owner = house;
+	if( houses.length > 0) {
+		context.vars.houseId = houses.sample()
 	} else
 		delete context.vars.houseId
 	return done()
 }
 
-/**
- * Select house from a list of houses
- * assuming: user context.vars.user; houses context.vars.housesLst
- */
-function selectHouse2(context, events, done) {
-	if( houses.length > 0) {
-		let house = houses.sample()
-		context.vars.houseId = house.id;
+
+function selectHouseByLocation(context, events, done) {
+	if( typeof context.vars.housesLocationLst !== 'undefined' &&
+		context.vars.housesLocationLst.constructor === Array && context.vars.housesLocationLst.length > 0) {
+		let house = context.vars.housesLocationLst.sample()
+		context.vars.houseId = house.id
 	} else
 		delete context.vars.houseId
 	return done()
@@ -336,15 +332,13 @@ function selectHouse2(context, events, done) {
  * assuming: user context.vars.user; rentals context.vars.rentalsLst
  */
 function selectRental(context, events, done) {
-	delete context.vars.value;
-	if( typeof context.vars.user !== 'undefined' && typeof context.vars.rentalsLst !== 'undefined' && 
-			context.vars.rentalsLst.constructor === Array && context.vars.rentalsLst.length > 0) {
-		let rental = context.vars.rentalsLst.sample()
-		context.vars.rentalId = rental.id;
-		context.vars.owner = rental.owner;
-		context.vars.houseId = rental.houseId;
-	} else
-		delete context.vars.rentalId
+	if( typeof context.vars.periodLst !== 'undefined' &&
+		context.vars.periodLst.constructor === Array && context.vars.periodLst.length > 0) {
+		let period = context.vars.periodLst.sample()
+		context.vars.startDate = period.startDate;
+		context.vars.endDate = period.endDate;
+	}
+
 	return done()
 }
 
@@ -354,13 +348,26 @@ function selectRental(context, events, done) {
  */
 function selectQuestion(context, events, done) {
 	delete context.vars.value;
-	if( typeof context.vars.user !== 'undefined' && typeof context.vars.questionLst !== 'undefined' && 
-			context.vars.questionLst.constructor === Array && context.vars.questionLst.length > 0) {
+	if( typeof context.vars.user !== 'undefined' && typeof context.vars.questionLst !== 'undefined' &&
+		context.vars.questionLst.constructor === Array && context.vars.questionLst.length > 0) {
 		let question = context.vars.questionLst.sample()
 		context.vars.questionId = question.id;
 		context.vars.owner = question.owner;
 		context.vars.houseId = question.houseId;
 		context.vars.question = question.questionContent;
+		context.vars.reply = faker.lorem.sentence(2);
+	} else
+		delete context.vars.questionId
+	return done()
+}
+
+
+function selectQuestion2(context, events, done) {
+	delete context.vars.value;
+	if( typeof context.vars.user !== 'undefined' && typeof context.vars.questionLst !== 'undefined' &&
+		context.vars.questionLst.constructor === Array && context.vars.questionLst.length > 0) {
+		let question = context.vars.questionLst.sample()
+		context.vars.questionId = question.id;
 		context.vars.reply = faker.lorem.sentence(2);
 	} else
 		delete context.vars.questionId
@@ -374,13 +381,12 @@ function selectQuestion(context, events, done) {
  * 1 -> browse recent
  */
 function decideNextAction(context, events, done) {
-	delete context.vars.auctionId;
 	let rnd = Math.random()
 	if( rnd < 0.1) {
 		context.vars.nextAction = 0; // select discount
 		context.vars.housesLst = context.vars.housesDiscountLst;
 	} else {
-		context.vars.nextAction = 1; // select location 
+		context.vars.nextAction = 1; // select location
 		context.vars.location = locations.sample();
 		context.vars.initDate = randomDate();
 		context.vars.endDate = context.vars.date;
@@ -401,43 +407,43 @@ function decideNextAction(context, events, done) {
 
 
 /**
- * Return true with probability 20% 
+ * Return true with probability 20%
  */
 function random20(context, next) {
-  const continueLooping = Math.random() < 0.2
-  return next(continueLooping);
+	const continueLooping = Math.random() < 0.2
+	return next(continueLooping);
 }
 
 /**
- * Return true with probability 50% 
+ * Return true with probability 50%
  */
 function random50(context, next) {
-  const continueLooping = Math.random() < 0.5
-  return next(continueLooping);
+	const continueLooping = Math.random() < 0.5
+	return next(continueLooping);
 }
 
 /**
- * Return true with probability 70% 
+ * Return true with probability 70%
  */
 function random70(context, next) {
-  const continueLooping = Math.random() < 0.7
-  return next(continueLooping);
+	const continueLooping = Math.random() < 0.7
+	return next(continueLooping);
 }
 
 /**
- * Return true with probability 70% 
+ * Return true with probability 70%
  */
 function random80(context, next) {
-  const continueLooping = Math.random() < 0.8
-  return next(continueLooping);
+	const continueLooping = Math.random() < 0.8
+	return next(continueLooping);
 }
 
 /**
- * Return true with probability 70% 
+ * Return true with probability 70%
  */
 function random90(context, next) {
-  const continueLooping = Math.random() < 0.9
-  return next(continueLooping);
+	const continueLooping = Math.random() < 0.9
+	return next(continueLooping);
 }
 
 /**
@@ -452,4 +458,3 @@ function getRandomDateInRange(start, end) {
 
 	return { startDate, endDate };
 }
-

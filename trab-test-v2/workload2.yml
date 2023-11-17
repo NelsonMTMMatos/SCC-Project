@@ -1,0 +1,28 @@
+config:
+  target: 'https://scc24funwesteurope60665.azurewebsites.net/api'
+  plugins:
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+  processor: "./test-utils.js"
+  phases:
+    - name: "Serverless"
+      duration: 60
+      arrivalRate: 1               # set this value as high as possible for avoiding timeouts
+
+scenarios:
+  - name: 'User checks discounted houses until a certain date'
+    weight: 5
+    flow:
+      - loop:
+        - get:
+            url: "/serverless/discounted?date=2025-01-01"
+            name: "GET:/serverless/discounted"
+            headers:
+              Accept: application/json
+        - get:
+            url: "/serverless/houses/recent"
+            name: "GET:/serverless/houses/recent"
+            headers:
+              Accept: application/json
+        count: 10
+
