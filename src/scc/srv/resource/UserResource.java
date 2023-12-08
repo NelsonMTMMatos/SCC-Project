@@ -71,6 +71,7 @@ public class UserResource {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response createUser(User user){
 
         try{
@@ -80,7 +81,7 @@ public class UserResource {
                 return Response.status(Status.CONFLICT).build();
         }
 
-        return Response.ok().build();
+        return Response.ok(user).build();
     }
 
     @DELETE
