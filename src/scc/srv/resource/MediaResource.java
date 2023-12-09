@@ -1,67 +1,46 @@
 package scc.srv.resource;
 
-import com.azure.core.util.BinaryData;
-import com.azure.storage.blob.BlobClient;
-import com.azure.storage.blob.BlobContainerClient;
-import com.azure.storage.blob.BlobContainerClientBuilder;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import java.io.*;
 import scc.utils.Hash;
 
-/**
- * Resource for managing media files, such as images.
- */
 @Path("/media")
-public class MediaResource
-{
-	public final String storageConnectionString = System.getenv("BlobStoreConnection");
+public class MediaResource {
 
-	BlobContainerClient containerClient;
+	private final File storageDirectory = new File("/mnt/vol");
 
-	public MediaResource(){
-		containerClient = new BlobContainerClientBuilder()
-				.connectionString(storageConnectionString)
-				.containerName("images")
-				.buildClient();
-	}
-	/**
-	 * Post a new image.The id of the image is its hash.
-	 */
+	public MediaResource() {}
+
 	@POST
 	@Consumes(MediaType.APPLICATION_OCTET_STREAM)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String upload(byte[] contents) {
 		String filename = Hash.of(contents) + ".jpg";
-		try{
-			BlobClient blob = containerClient.getBlobClient(filename);
+		File file = new File(storageDirectory, filename);
 
-			blob.upload(BinaryData.fromBytes(contents));
-		}catch( Exception e) {
+		try (FileOutputStream fos = new FileOutputStream(file)) {
+			fos.write(contents);
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
 		return filename;
 	}
 
-	/**
-	 * Return the contents of an image. Throw an appropriate error message if
-	 * id does not exist.
-	 */
 	@GET
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public byte[] download(@PathParam("id") String id) {
-		try{
-			BlobClient blob = containerClient.getBlobClient(id);
+	public byte[] download(@PathParam("id") String id) throws IOException {
+		File file = new File(storageDirectory, id);
 
-			if(!blob.exists()) throw new NotFoundException();
+		if (!file.exists())
+			throw new NotFoundException("File not found: " + id);
 
-			return blob.downloadContent().toBytes();
-		}catch( Exception e) {
-			e.printStackTrace();
+		try (FileInputStream fis = new FileInputStream(file)) {
+			byte[] data = new byte[(int) file.length()];
+			fis.read(data);
+			return data;
 		}
-		return null;
 	}
-
 }

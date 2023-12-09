@@ -52,7 +52,7 @@ public class HouseResource {
         HouseDAO hDAO = new HouseDAO(house);
         db.createHouse(hDAO);
 
-        return Response.ok(hDAO).build();
+        return Response.ok(hDAO.getId()).build();
     }
 
     @DELETE

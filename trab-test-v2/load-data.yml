@@ -1,5 +1,5 @@
 config:
-  target: 'https://scc24appwesteurope60665.azurewebsites.net/rest'
+  target: 'http://20.101.178.174:8080/scc2324-phase1-1.0/rest'
   plugins:
     metrics-by-endpoint:
       useOnlyRequestNames: true

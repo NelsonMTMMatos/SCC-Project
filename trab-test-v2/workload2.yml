@@ -1,5 +1,5 @@
 config:
-  target: 'https://scc24funwesteurope60665.azurewebsites.net/api'
+  target: 'http://20.76.245.148:8080/scc2324-phase1-1.0/api'
   plugins:
     metrics-by-endpoint:
       useOnlyRequestNames: true

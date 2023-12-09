@@ -18,6 +18,8 @@ public class MainApplication extends Application
 		singletons.add( new QuestionResource());
 		singletons.add( new RentalResource());
 		singletons.add( new UserResource());
+
+		resources.add(ControlResource.class);
 	}
 
 	@Override
