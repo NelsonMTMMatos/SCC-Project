@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: azure-vote-back
+  name: redis-cache
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: azure-vote-back
+      app: redis-cache
   template:
     metadata:
       labels:
-        app: azure-vote-back
+        app: redis-cache
     spec:
       nodeSelector:
         "beta.kubernetes.io/os": linux
       containers:
-      - name: azure-vote-back
+      - name: redis-cache
         image: mcr.microsoft.com/oss/bitnami/redis:6.0.8
         env:
         - name: ALLOW_EMPTY_PASSWORD
@@ -35,47 +35,47 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: azure-vote-back
+  name: redis-cache
 spec:
   ports:
   - port: 6379
   selector:
-    app: azure-vote-back
+    app: redis-cache
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: azure-vote-front
+  name: application
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: azure-vote-front
+      app: application
   template:
     metadata:
       labels:
-        app: azure-vote-front
+        app: application
     spec:
       nodeSelector:
         "beta.kubernetes.io/os": linux
       containers:
-      - name: azure-vote-front
+      - name: application
         image: renatoviola02/scc2324-app:latest
         resources:
           requests:
-            cpu: 250m
-            memory: 256Mi
+            cpu: 500m
+            memory: 1024Mi
           limits:
-            cpu: 250m
-            memory: 256Mi
+            cpu: 500m
+            memory: 1024Mi
         ports:
         - containerPort: 8080
         env:
         - name: REDIS_URL
-          value: "azure-vote-back"
+          value: "redis-cache"
         - name: COSMOSDB_KEY
-          value: "zTbw9sdbxV6pB1MG9v2FivmlKo4jStmTaKMwg0d5h8htv1UaIYkV7DH8Nu3HvjqOY5SDE2cuyCIGACDb4PNJbg=="
+          value: "BmMTkbVnUReqzKhzQ4vvHKkU8Mhmkr9UDok9dKXkPp7kagmrRfONeZMrpKxOssi6lgT1YaLbyEgDACDbWV6kbQ=="
         - name: COSMOSDB_URL
           value: "https://scc2460665.documents.azure.com:443/"
         - name: COSMOSDB_DATABASE
@@ -92,13 +92,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: azure-vote-front
+  name: application
 spec:
   type: LoadBalancer
   ports:
   - port: 8080
   selector:
-    app: azure-vote-front
+    app: application
 
 ---
 apiVersion: v1
